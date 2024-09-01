@@ -21,7 +21,8 @@
     <label for="tipoVending">1. ¿Qué tipo de vending es?</label>
     <select id="tipoVending" name="tipoVending" onchange="actualizarFormulario()">
         <option value="limpieza">Limpieza o Automotriz</option>
-        <option value="croquetas">Croquetas o Granos</option>
+        <option value="croquetas">Croquetas</option>
+        <option value="granos">Granos</option>
         <option value="agua_hielo">Agua y Hielo</option>
     </select><br><br>
 
@@ -191,8 +192,8 @@
     <button onclick="generarJSON()">~ ENVIAR ~</button>
 
     <!-- Sección para mostrar el JSON generado -->
-    <h2>Resultado JSON</h2>
-      <pre id="resultado"></pre> 
+    <!--<h2>Resultado JSON</h2>
+      <pre id="resultado"></pre> -->
 
     <script type="text/javascript" src="./scripts.js"></script>
 </body>
