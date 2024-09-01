@@ -72,7 +72,7 @@ function generarJSON() {
 function enviarJSONAlESP32(jsonData) {
     let xhttp = new XMLHttpRequest();
     xhttp.open("POST", "/SendJson", true);  // Cambia "/config" por la ruta correcta en tu ESP32
-    xhttp.addHeader("Content-Type", "application/json");
+    xhttp.setRequestHeader("Content-Type", "application/json");
     xhttp.send(jsonData);
 
     xhttp.onreadystatechange = function() {
