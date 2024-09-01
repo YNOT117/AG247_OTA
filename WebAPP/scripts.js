@@ -63,7 +63,7 @@ function generarJSON() {
     }
 
     // Generar el JSON y mostrarlo
-    let jsonConfiguracion = JSON.stringify(configuracion, null, 2);
+    let jsonConfiguracion = JSON.stringify(configuracion);
     document.getElementById("resultado").textContent = jsonConfiguracion;
     enviarJSONAlESP32(jsonConfiguracion);
 }
@@ -87,3 +87,4 @@ function enviarJSONAlESP32(jsonData) {
         alert("Error al enviar la configuración al ESP32");
     };
 }
+
