@@ -64,7 +64,7 @@ function generarJSON() {
 
     // Generar el JSON y mostrarlo
     let jsonConfiguracion = JSON.stringify(configuracion);
-    document.getElementById("resultado").textContent = jsonConfiguracion;
+    //document.getElementById("resultado").textContent = jsonConfiguracion;
     enviarJSONAlESP32(jsonConfiguracion);
 }
 
