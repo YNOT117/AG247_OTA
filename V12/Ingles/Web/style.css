@@ -1,0 +1,109 @@
+body{
+    background: linear-gradient(#e49532, #FFFFFF);
+}
+.myButton {
+    width: 100px;
+	box-shadow: 0px 10px 14px -7px #545454;
+	background-color:#22408e;
+	border-radius:8px;
+	display:inline-block;
+	cursor:pointer;
+	color:#ffffff;
+	font-family:Arial;
+	font-size:18px;
+	font-weight:bold;
+	padding:5px 10px;
+	text-decoration:none;
+    margin: 20px;
+}
+.myButton:hover {
+	background-color:#45d65d;
+}
+.myButton:active {
+	position:relative;
+	top:1px;
+}
+
+#form{
+    width: 100%;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+#logo{
+    width: 5cm;
+    height: 5cm;
+	margin: 20px;
+}
+
+#PageNotFound{
+	font-family: Arial;
+	font-size: xx-large;
+}
+
+#titulo{
+	font-family: Times New Roman;
+	font-size: 25px;
+	color: #ffffff;
+	letter-spacing: 2px;
+	word-spacing: 0px;
+	font-weight: 700;
+	text-decoration: none;
+	border-radius: 20px;
+	display: flex;
+	justify-content: center;
+}
+
+.css-input {
+	width: 50%;
+	height: 30px;
+	font-family: Times New Roman;
+	font-size: 16px;
+	border-width: 1px;
+	border-color: #CCCCCC;
+	background-color: #FFFFFF;
+	color: #000000;
+	border-style: solid;
+	border-radius: 7px;
+	box-shadow: 0px 0px 5px rgba(66,66,66,.75);
+}
+
+
+select{
+	width: 50%;
+	height: 30px;
+	font-family: Times New Roman;
+	margin: 10px 0px;
+	border-width: 1px;
+	border-color: #CCCCCC;
+	background-color: #FFFFFF;
+	color: #000000;
+	border-style: solid;
+	border-radius: 7px;
+	box-shadow: 0px 0px 5px rgba(66,66,66,.75);
+}
+
+#loading {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.3);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+    z-index: 1000;
+}
+
+#loading img {
+    width: 100%; /* Puedes ajustar el tamaño de la imagen de carga */
+	height: 100%;
+}
+
+.image{
+	width: 250px;
+    height: 250px;
+}
