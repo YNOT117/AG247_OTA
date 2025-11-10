@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="es">
+
+<head>
+    <title>Configuración de Tarjeta Vending</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="./style.css">
+</head>
+
+<body>
+
+    <!-- Header -->
+    <header>
+        <img src="./AG247_Logo.png" alt="Logo de la marca">
+    </header>
+
+    <h1>Configuración Inicial</h1>
+
+    <!-- Pregunta 1: Tipo de vending -->
+    <label for="tipoVending">1. ¿Qué tipo de vending es?</label>
+    <select id="tipoVending" name="tipoVending" onchange="actualizarFormulario()">
+        <option value="limpieza">Limpieza o Automotriz</option>
+        <option value="croquetas">Croquetas</option>
+        <option value="granos">Granos</option>
+        <option value="agua_hielo">Agua y Hielo</option>
+    </select><br><br>
+
+    <!-- Pregunta 2: Usa billetero -->
+    <label for="usaBilletero">2. ¿Usa Billetero?</label>
+    <select id="usaBilletero" name="usaBilletero">
+        <option value="si">Sí</option>
+        <option value="no">No</option>
+    </select><br><br>
+
+    <!-- Pregunta 3: Da cambio -->
+    <label for="daCambio">3. ¿Da cambio?</label>
+    <select id="daCambio" name="daCambio">
+        <option value="si">Sí</option>
+        <option value="no">No</option>
+    </select><br><br>
+
+    <!-- Pregunta 4: Voz activada -->
+    <label for="vozActivada">4. ¿Voz activada?</label>
+    <select id="vozActivada" name="vozActivada">
+        <option value="si">Sí</option>
+        <option value="no">No</option>
+    </select><br><br>
+
+    <!-- Preguntas adicionales para Agua y Hielo -->
+    <div id="aguaHieloConfig" style="display: none;">
+        <!-- Pregunta: Sensor de temperatura -->
+        <label for="sensorTemperatura">5. ¿Sensor de temperatura?</label>
+        <select id="sensorTemperatura" name="sensorTemperatura">
+            <option value="relevador">Relevador</option>
+            <option value="ntc">NTC</option>
+            <option value="desactivado">Desactivado</option>
+        </select><br><br>
+
+        <!-- Pregunta: Sensor de presión -->
+        <label for="sensorPresion">6. ¿Sensor de presión?</label>
+        <select id="sensorPresion" name="sensorPresion">
+            <option value="relevador">Relevador</option>
+            <option value="desactivado">Desactivado</option>
+        </select><br><br>
+    </div>
+
+    <!-- Preguntas para los productos 1 al 8 -->
+    <h2>Configuración de Productos</h2>
+    <div id="productos">
+        <!-- Producto 1 -->
+        <div class="producto">
+            <h3>Producto 1</h3>
+            <label for="nombreProducto1">Nombre:</label>
+            <div id="nombreProducto1-container">
+                <input type="text" id="nombreProducto1" name="nombreProducto1">
+            </div>
+            <label for="costoProducto1">Costo:</label>
+            <input type="number" id="costoProducto1" name="costoProducto1">
+            <div id="cantidadProducto1-container">
+                <label for="cantidadProducto1">Cantidad:</label>
+                <input type="number" id="cantidadProducto1" name="cantidadProducto1">
+            </div>
+        </div>
+
+        <!-- Producto 2 -->
+        <div class="producto">
+            <h3>Producto 2</h3>
+            <label for="nombreProducto2">Nombre:</label>
+            <div id="nombreProducto2-container">
+                <input type="text" id="nombreProducto2" name="nombreProducto2">
+            </div>
+            <label for="costoProducto2">Costo:</label>
+            <input type="number" id="costoProducto2" name="costoProducto2">
+            <div id="cantidadProducto2-container">
+                <label for="cantidadProducto2">Cantidad:</label>
+                <input type="number" id="cantidadProducto2" name="cantidadProducto2">
+            </div>
+        </div>
+
+        <!-- Producto 3 -->
+        <div class="producto">
+            <h3>Producto 3</h3>
+            <label for="nombreProducto3">Nombre:</label>
+            <div id="nombreProducto3-container">
+                <input type="text" id="nombreProducto3" name="nombreProducto3">
+            </div>
+            <label for="costoProducto3">Costo:</label>
+            <input type="number" id="costoProducto3" name="costoProducto3">
+            <div id="cantidadProducto3-container">
+                <label for="cantidadProducto3">Cantidad:</label>
+                <input type="number" id="cantidadProducto3" name="cantidadProducto3">
+            </div>
+        </div>
+
+        <!-- Producto 4 -->
+        <div class="producto">
+            <h3>Producto 4</h3>
+            <label for="nombreProducto4">Nombre:</label>
+            <div id="nombreProducto4-container">
+                <input type="text" id="nombreProducto4" name="nombreProducto4">
+            </div>
+            <label for="costoProducto4">Costo:</label>
+            <input type="number" id="costoProducto4" name="costoProducto4">
+            <div id="cantidadProducto4-container">
+                <label for="cantidadProducto4">Cantidad:</label>
+                <input type="number" id="cantidadProducto4" name="cantidadProducto4">
+            </div>
+        </div>
+
+        <!-- Producto 5 -->
+        <div class="producto">
+            <h3>Producto 5</h3>
+            <label for="nombreProducto5">Nombre:</label>
+            <div id="nombreProducto5-container">
+                <input type="text" id="nombreProducto5" name="nombreProducto5">
+            </div>
+            <label for="costoProducto5">Costo:</label>
+            <input type="number" id="costoProducto5" name="costoProducto5">
+            <div id="cantidadProducto5-container">
+                <label for="cantidadProducto5">Cantidad:</label>
+                <input type="number" id="cantidadProducto5" name="cantidadProducto5">
+            </div>
+        </div>
+
+        <!-- Producto 6 -->
+        <div class="producto">
+            <h3>Producto 6</h3>
+            <label for="nombreProducto6">Nombre:</label>
+            <div id="nombreProducto6-container">
+                <input type="text" id="nombreProducto6" name="nombreProducto6">
+            </div>
+            <label for="costoProducto6">Costo:</label>
+            <input type="number" id="costoProducto6" name="costoProducto6">
+            <div id="cantidadProducto6-container">
+                <label for="cantidadProducto6">Cantidad:</label>
+                <input type="number" id="cantidadProducto6" name="cantidadProducto6">
+            </div>
+        </div>
+
+        <!-- Producto 7 -->
+        <div class="producto">
+            <h3>Producto 7</h3>
+            <label for="nombreProducto7">Nombre:</label>
+            <div id="nombreProducto7-container">
+                <input type="text" id="nombreProducto7" name="nombreProducto7">
+            </div>
+            <label for="costoProducto7">Costo:</label>
+            <input type="number" id="costoProducto7" name="costoProducto7">
+            <div id="cantidadProducto7-container">
+                <label for="cantidadProducto7">Cantidad:</label>
+                <input type="number" id="cantidadProducto7" name="cantidadProducto7">
+            </div>
+        </div>
+
+        <!-- Producto 8 -->
+        <div class="producto">
+            <h3>Producto 8</h3>
+            <label for="nombreProducto8">Nombre:</label>
+            <div id="nombreProducto8-container">
+                <input type="text" id="nombreProducto8" name="nombreProducto8">
+            </div>
+            <label for="costoProducto8">Costo:</label>
+            <input type="number" id="costoProducto8" name="costoProducto8">
+            <div id="cantidadProducto8-container">
+                <label for="cantidadProducto8">Cantidad:</label>
+                <input type="number" id="cantidadProducto8" name="cantidadProducto8">
+            </div>
+        </div>
+    </div>
+
+    <button onclick="generarJSON()">~ ENVIAR ~</button>
+
+    <!-- Sección para mostrar el JSON generado -->
+    <!--<h2>Resultado JSON</h2>
+      <pre id="resultado"></pre> -->
+    <script type="text/javascript" src="./scripts.js"></script>
+</body>
+
+</html>
