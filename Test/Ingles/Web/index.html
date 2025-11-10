@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="es">
+ 
+   <head>
+      <title>A Granel 24-7</title>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1">
+      <link rel="stylesheet" href="./style.css">
+   </head>
+ 
+   <body>
+
+   <form id="form" action="/ConectarWiFi" method="get">
+
+      <img id="logo" src="./AG247_Logo.png">
+
+      <p id="titulo">Redes disponibles</p>
+
+      <select id="selector" name="SSID" ></select>
+
+      <input type="text" name="PASS" placeholder="Contraseña WiFi" class="css-input">
+      </br>
+      <input type="text" name="Token" placeholder="Token De Telegram" class="css-input">      
+      </br>
+
+      <div>
+         <button class="myButton" type="button" onclick="ObtenerRedes()">Buscar</button>
+         <button class="myButton" type="submit">Conectar</button>
+      </div>
+      <div id="loading" style="display:none;">
+         <div class="image">
+             <img src="./cargando.gif" alt="Cargando..."> 
+         </div>
+     </div>
+   </form> 
+   
+ 
+   </body>
+
+   <script type="text/javascript" src="./scripts.js"></script>
+
+</html>
