@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Configurar WiFi</title>
+
+    <link rel="stylesheet" href="./style.css">
+    <script src="./scripts.js" defer></script>
+</head>
+
+<body>
+
+    <!-- LOADER GLOBAL -->
+    <div id="loader" class="loader-overlay hidden">
+        <div class="loader"></div>
+    </div>
+
+    <div class="container">
+
+        <img src="./Logo.png" class="logo" alt="Logo">
+
+        <h1 class="title">Configuración de Red</h1>
+        <p class="subtitle">Selecciona tu red WiFi e ingresa los datos necesarios</p>
+
+        <form id="wifiForm" method="GET" action="/ConectarWiFi">
+
+            <!-- Nombre de máquina -->
+            <label class="label">Nombre de la máquina</label>
+            <input type="text" id="machineName" name="NAME" class="input" placeholder="Ejemplo: purificadora" required>
+            <small id="nameError" style="color:#ff7a1a; display:block; height:18px; margin-top:4px;"></small>
+
+
+            <!-- Redes disponibles -->
+            <label class="label">Red WiFi</label>
+            <div class="row">
+                <select id="selector" name="SSID" class="input"></select>
+                <button type="button" id="btnBuscar" class="btn secondary">Buscar</button>
+            </div>
+
+            <!-- Contraseña WiFi -->
+            <label class="label">Contraseña</label>
+            <input type="password" name="PASS" class="input" placeholder="Contraseña WiFi">
+
+            <!-- Botón conectar -->
+            <button type="submit" class="btn primary full">Conectar</button>
+        </form>
+
+    </div>
+
+</body>
+</html>

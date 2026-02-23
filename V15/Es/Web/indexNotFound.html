@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="es">
+
+<head>
+    <meta charset="utf-8">
+    <title>Página no encontrada</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <style>
+        /* ========== VARIABLES ========== */
+        :root {
+            --agranel-blue: #0055b8;
+            --agranel-orange: #ff7a1a;
+            --bg: #0f172a;
+            --card-bg: #0b1120;
+            --card-border: rgba(148, 163, 184, 0.3);
+            --text-main: #e5e7eb;
+            --text-muted: #94a3b8;
+            --radius: 18px;
+        }
+
+        /* ========== GLOBAL ========== */
+        html, body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden; /* evita scroll fantasma */
+        }
+
+        body {
+            background: var(--bg);
+            font-family: system-ui, sans-serif;
+            color: var(--text-main);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100dvh;
+            text-align: center;
+            padding: 20px;
+        }
+
+        /* ========== CONTENEDOR CARD ========== */
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius);
+            padding: 34px;
+            width: 90%;
+            max-width: 420px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.35);
+            animation: fadeIn .4s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ========== LOGO ========== */
+        #logo {
+            width: 110px;
+            margin-bottom: 10px;
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        /* ========== TEXTOS ========== */
+        .title {
+            font-size: 1.6rem;
+            font-weight: 700;
+            margin-bottom: 6px;
+        }
+
+        .subtitle {
+            color: var(--text-muted);
+            font-size: 1rem;
+            margin-bottom: 20px;
+        }
+
+        /* ========== BOTÓN ========== */
+        .btn {
+            width: 100%;
+            padding: 14px;
+            border-radius: 12px;
+            border: none;
+            cursor: pointer;
+            font-size: 1.05rem;
+            font-weight: 600;
+            color: white;
+            background: linear-gradient(135deg, var(--agranel-orange), var(--agranel-blue));
+            transition: transform .15s, opacity .2s;
+        }
+
+        .btn:hover {
+            transform: scale(1.03);
+        }
+
+        .btn:active {
+            transform: scale(0.97);
+        }
+
+        /* ========== RESPONSIVO ========== */
+        @media (max-width: 480px) {
+            #logo { width: 90px; }
+            .title { font-size: 1.35rem; }
+            .subtitle { font-size: 0.95rem; }
+            .card { padding: 26px; }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="card">
+        <img id="logo" src="Logo.png">
+
+        <h1 class="title">Página no encontrada</h1>
+        <p class="subtitle">No pudimos encontrar la página que buscabas.</p>
+
+        <form action="index.html">
+            <button class="btn" type="submit">Regresar</button>
+        </form>
+    </div>
+
+</body>
+
+</html>

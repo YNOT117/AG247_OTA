@@ -1,0 +1,266 @@
+/* ==========================
+   Estilos para VENTAS
+   ========================== */
+
+:root {
+  --card-bg: #0b1120;
+  --card-border: rgba(148, 163, 184, 0.3);
+  --text-main: #e5e7eb;
+  --text-muted: #9ca3af;
+  --radius: 18px;
+  --agranel-blue: #0055b8;
+  --agranel-orange: #ff7a1a;
+}
+
+/* ---------------- Global ---------------- */
+
+body {
+  margin: 0;
+  font-family: system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text-main);
+  display: flex;
+  height: 100vh;
+  overflow-x: hidden;
+}
+
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #0b1120;
+  padding: 10px 14px;
+  border-radius: var(--radius);
+  margin-bottom: 20px;
+  border: 1px solid var(--card-border);
+  position: relative;
+  z-index: 1000;
+}
+
+.menu-btn {
+  background: none;
+  border: none;
+  font-size: 1.6rem;
+  cursor: pointer;
+  color: var(--text-main);
+  position: relative;
+  z-index: 11000;
+}
+
+.topbar-title {
+  margin: 0; 
+  font-size: 1.1rem; 
+}
+
+
+/* Estado */
+
+.status-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 999px;
+  background: red;
+}
+
+.status-dot.online {
+  background: #22c55e;
+}
+
+.status-dot.offline {
+  background: #ef4444;
+}
+
+/* ---------------- Tabs ---------------- */
+
+.tabs {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.tab {
+  padding: 10px 16px;
+  background: #0a1122;
+  color: var(--text-main);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius);
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: background .2s, transform .1s;
+}
+
+.tab:hover {
+  background: #111b33;
+}
+
+.tab.active {
+  background: linear-gradient(135deg, var(--agranel-orange), var(--agranel-blue));
+  border-color: transparent;
+  font-weight: 600;
+  transform: translateY(-1px);
+}
+
+/* ---------------- Tab content ---------------- */
+
+.tab-content {
+  display: none;
+}
+
+.tab-content.active {
+  display: block;
+}
+
+/* ---------------- Filtros ---------------- */
+
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.filters input,
+.filters select {
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: #0b1120;
+  color: var(--text-main);
+  border: 1px solid var(--card-border);
+}
+
+#btnActualizar {
+  padding: 8px 14px;
+  background: var(--agranel-blue);
+  border: none;
+  color: white;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: transform .15s;
+}
+
+#btnActualizar:hover {
+  transform: scale(1.05);
+}
+
+/* ---------------- Tabla ---------------- */
+
+.table-container {
+  width: 100%;
+  overflow-x: auto;
+  background: var(--card-bg);
+  border-radius: var(--radius);
+  border: 1px solid var(--card-border);
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+thead {
+  background: #0f1a30;
+}
+
+thead th {
+  padding: 10px;
+  text-align: left;
+  color: var(--text-muted);
+  font-weight: 500;
+  border-bottom: 1px solid var(--card-border);
+}
+
+tbody td {
+  padding: 10px;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+}
+
+tbody tr:hover {
+  background: rgba(255,255,255,0.03);
+}
+
+/* ---------------- Productos (pestaña 2) ---------------- */
+
+.cards-productos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 18px;
+  margin-bottom: 20px;
+}
+
+.card-prod {
+  background: var(--card-bg);
+  border-radius: var(--radius);
+  padding: 16px;
+  border: 1px solid var(--card-border);
+  box-shadow: 0 8px 25px rgba(0,0,0,0.35);
+}
+
+.card-prod h3 {
+  margin: 0 0 8px;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+.card-prod .num {
+  font-size: 1.4rem;
+  margin: 0;
+  font-weight: 700;
+}
+
+/* ---------------- Gráfica productos ---------------- */
+
+.chart-container {
+  height: 260px;
+  background: var(--card-bg);
+  border-radius: var(--radius);
+  border: 1px solid var(--card-border);
+  padding: 12px;
+}
+
+/* ---------------- Responsive ---------------- */
+
+@media (max-width: 750px) {
+  .filters {
+    flex-direction: column;
+  }
+
+  .tabs {
+    flex-direction: column;
+  }
+}
+
+
+
+
+
+/* Loader general */
+.loader-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(3, 7, 18, 0.82);
+  display: flex;               /* visible por defecto */
+  align-items: center;
+  justify-content: center;
+  z-index: 3000;
+}
+
+.loader {
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  border: 4px solid rgba(148, 163, 184, 0.25);
+  border-top-color: var(--agranel-orange);
+  border-right-color: var(--agranel-blue);
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Oculto */
+.loader-overlay.hidden {
+  display: none !important;
+}

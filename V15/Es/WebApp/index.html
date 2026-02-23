@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>A Granel 24/7 – Panel Local</title>
+
+  <!-- Hoja de estilos del login -->
+  <link rel="stylesheet" href="assets/css/login.css" />
+</head>
+
+<body>
+  <main class="auth-layout">
+    <section class="auth-card">
+      <header class="auth-header">
+        <img src="Logo.png" alt="A Granel 24/7" class="auth-logo" />
+
+        <h1 class="auth-title">Panel Agranel</h1>
+        <p class="auth-subtitle">Inicia sesión para administrar tu máquina.</p>
+      </header>
+
+      <form class="auth-form" onsubmit="event.preventDefault(); IniciarSesion();">
+        <label class="field">
+          <span class="field-label">Usuario</span>
+          <input
+            type="text"
+            id="user"
+            placeholder="Usuario"
+            autocomplete="username"
+            class="field-input"
+          />
+        </label>
+
+        <label class="field">
+          <span class="field-label">Contraseña</span>
+          <input
+            type="password"
+            id="pass"
+            placeholder="••••••••"
+            autocomplete="current-password"
+            class="field-input"
+          />
+        </label>
+
+        <button type="submit" class="auth-button">
+          Entrar
+        </button>
+
+        <p id="msg" class="auth-message"></p>
+      </form>
+
+      <footer class="auth-footer">
+        <span class="badge-local">Panel local</span>
+        <small>Web local • A Granel 24/7</small>
+      </footer>
+    </section>
+  </main>
+  <!-- Script de login -->
+  <script src="assets/js/login.js" defer></script>
+
+   <!-- Loader (único y con blur) -->
+  <div id="loader" class="loader-overlay hidden">
+    <div class="loader"></div>
+  </div>
+
+</body>
+</html>

@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Panel – Ventas</title>
+
+  <link rel="stylesheet" href="../assets/css/dashboard.css" />
+  <link rel="stylesheet" href="../assets/css/ventas.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="../assets/js/ventas.js" defer></script>
+</head>
+
+<body>
+
+  <!-- Sidebar -->
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-header">
+      <img src="../Logo.png" class="sidebar-logo" alt="Agranel" />
+      <h2 class="sidebar-title">Panel</h2>
+    </div>
+
+    <nav class="sidebar-nav">
+      <a href="dashboard.html">📊 Dashboard</a>
+      <a href="ventas.html" class="active">💰 Ventas</a>
+      <a href="inventario.html">📦 Inventario</a>
+      <a href="configuracion.html">⚙️ Configuración</a>
+      <a href="monitoreo.html">📡 Monitoreo</a>
+      <a id="logout">🚪 Cerrar sesión</a>
+    </nav>
+  </aside>
+
+  <!-- Overlay móvil -->
+  <div id="overlay" class="overlay"></div>
+
+  <!-- Contenido principal -->
+  <div class="main">
+
+    <!-- Topbar -->
+       <header class="topbar">
+      <button id="menuBtn" class="menu-btn">☰</button>
+      <h1 class="topbar-title">Ventas</h1>
+      <span id="status" class="status-dot offline"></span>
+    </header>
+
+    <!-- Contenido -->
+    <section class="content">
+
+      <!-- Tabs -->
+      <div class="tabs">
+        <button class="tab active" data-tab="lista">📄 Lista de ventas</button>
+        <button class="tab" data-tab="productos">📦 Por producto</button>
+      </div>
+
+      <!-- ==== TAB 1: LISTA === -->
+      <div id="tab-lista" class="tab-content active">
+
+        <!-- Filtros -->
+        <div class="filters">
+          <input type="text" id="buscar" placeholder="🔍 Buscar...">
+
+          <select id="filtroProducto">
+            <option value="">Producto (todos)</option>
+          </select>
+
+          <select id="filtroPago">
+            <option value="">Pago (todos)</option>
+            <option>Efectivo</option>
+            <option>Saldo NFC</option>
+            <option>Puntos NFC</option>
+            <option>Telegram</option>
+          </select>
+
+          <button id="btnActualizar">Actualizar</button>
+        </div>
+
+        <!-- Tabla -->
+        <div class="table-container">
+          <table id="tablaVentas">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Producto</th>
+                <th>Cantidad</th>
+                <th>Venta ($)</th>
+                <th>Fecha</th>
+                <th>Hora</th>
+                <th>Pago</th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- Se llena desde ventas.js -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ==== TAB 2: PRODUCTOS === -->
+      <div id="tab-productos" class="tab-content">
+
+        <h2 class="section-title">Ventas por producto</h2>
+        <div id="cardsProductos" class="cards-productos"></div>
+
+        <div class="chart-container">
+          <canvas id="graficaProductos"></canvas>
+        </div>
+
+      </div>
+
+    </section>
+
+  </div>
+
+  <!-- Loader -->
+  <div id="loader" class="loader-overlay">
+    <div class="loader"></div>
+  </div>
+
+
+</body>
+</html>

@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Inventario</title>
+  <link rel="stylesheet" href="../assets/css/inventario.css">
+  <script src="../assets/js/inventario.js" defer></script>
+</head>
+
+<body>
+
+  <!-- Sidebar -->
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-header">
+      <img src="../Logo.png" class="sidebar-logo" alt="Agranel">
+      <h2 class="sidebar-title">Panel</h2>
+    </div>
+
+    <nav class="sidebar-nav">
+      <a href="dashboard.html">📊 Dashboard</a>
+      <a href="ventas.html">💰 Ventas</a>
+      <a href="inventario.html" class="active">📦 Inventario</a>
+      <a href="configuracion.html">⚙️ Configuración</a>
+      <a href="monitoreo.html">📡 Monitoreo</a>
+      <a id="logout">🚪 Cerrar sesión</a>
+    </nav>
+  </aside>
+
+  <div id="overlay" class="overlay"></div>
+
+  <!-- Main -->
+  <div class="main">
+
+    <header class="topbar">
+      <button id="menuBtn" class="menu-btn">☰</button>
+      <h1 class="topbar-title">Inventario</h1>
+      <span id="status" class="status-dot offline"></span>
+    </header>
+
+    <section class="content">
+
+      <h2 class="section-title">Productos disponibles</h2>
+
+      <!-- TABLA (PC) -->
+      <table class="inv-table">
+        <thead>
+          <tr>
+            <th>Producto</th>
+            <th>Precio</th>
+            <th>Cantidad</th>
+            <th>Tiempo</th>
+            <th>Cashback</th>
+            <th>Bloqueado</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="invTableBody"></tbody>
+      </table>
+
+      <!-- CARDS (MÓVIL) -->
+      <div id="cardsMobile" class="cards-mobile"></div>
+
+    </section>
+  </div>
+
+  <!-- Modal -->
+  <div id="modal-bg" class="modal-bg">
+    <div class="modal">
+
+      <h2>Editar producto</h2>
+
+      <!-- Nombre -->
+      <label for="prodNombreSelect">Nombre</label>
+      <select id="prodNombreSelect" class="hidden"></select>
+      <input id="prodNombreInput" type="text" class="hidden">
+
+      <!-- Precio -->
+      <label for="prodPrecio">Precio</label>
+      <input id="prodPrecio" type="number" min="0">
+
+      <!-- Cantidad -->
+      <label for="prodCantidad">Cantidad</label>
+      <input id="prodCantidad" type="number" min="0">
+
+      <!-- Tiempo -->
+      <label for="prodTiempo">Tiempo (Seg)</label>
+      <input id="prodTiempo" type="number" min="0">
+
+      <!-- Cashback -->
+      <label for="prodCashback">Cashback (%)</label>
+      <input id="prodCashback" type="number" min="0" max="100">
+
+      <!-- Bloqueado -->
+      <div class="chk-row">
+        <input type="checkbox" id="prodBloqueo">
+        <span>Bloqueado</span>
+      </div>
+
+      <!-- Botones -->
+      <div class="form-actions">
+        <button id="btnCancelar" class="btn-cancelar">Cancelar</button>
+        <button id="btnGuardar" class="btn-guardar">Guardar</button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Loader -->
+  <div id="loader" class="loader-overlay">
+    <div class="loader"></div>
+  </div>
+
+</body>
+</html>

@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monitoreo</title>
+
+    <link rel="stylesheet" href="../assets/css/monitoreo.css">
+    <script src="../assets/js/monitoreo.js" defer></script>
+</head>
+
+<body>
+
+    <!-- SIDEBAR -->
+    <aside id="sidebar" class="sidebar">
+        <div class="sidebar-header">
+            <img src="../Logo.png" class="sidebar-logo" alt="Agranel">
+            <h2 class="sidebar-title">Panel</h2>
+        </div>
+
+        <nav class="sidebar-nav">
+            <a href="dashboard.html">📊 Dashboard</a>
+            <a href="ventas.html">💰 Ventas</a>
+            <a href="inventario.html">📦 Inventario</a>
+            <a href="configuracion.html">⚙️ Configuración</a>
+            <a class="active" href="monitoreo.html">📡 Monitoreo</a>
+            <a id="logout">🚪 Cerrar sesión</a>
+        </nav>
+    </aside>
+
+    <div id="overlay" class="overlay"></div>
+
+    <!-- MAIN -->
+    <div class="main">
+        <header class="topbar">
+            <button id="menuBtn" class="menu-btn">☰</button>
+            <h1 class="topbar-title">Monitoreo</h1>
+            <span id="status" class="status-dot offline"></span>
+        </header>
+
+        <section class="content">
+
+            <!-- CARD PCBA -->
+            <div class="monitor-card">
+                <h2>🖥️ Información</h2>
+
+                <label>Nombre de tarjeta</label>
+                <input id="pcbaName" class="input" type="text">
+
+                <label>Usuario Web Local</label>
+                <input id="pcbaUser" class="input" type="text">
+
+                <label>Contraseña Web Local</label>
+                <input id="pcbaPass" class="input" type="password">
+
+                <button id="savePcbaBtn" class="btn primary">Guardar</button>
+                <p class="small-text">Los cambios se aplicarán al reiniciar la tarjeta</p>
+            </div>
+
+            <!-- CARD WIFI -->
+            <div class="card monitor-card">
+                <h2>📶 Información WiFi</h2>
+
+                <p><b>SSID:</b> <span id="monitorSSID">--</span></p>
+                <p><b>Contraseña:</b> <span id="monitorPASS">--</span></p>
+                <p><b>IP Local:</b> <span id="monitorIP">--</span></p>
+            </div>
+
+            <!-- TELEGRAM -->
+           <div class="card monitor-card">
+                <h2>🤖 Ajustes de Telegram</h2>
+
+                <label class="label">Token</label>
+                <input id="telegramToken" class="input" type="text">
+
+                <label class="label">Chat ID</label>
+                <input id="telegramChatID" class="input" type="text">
+
+                <div class="toggle-row">
+                    <input type="checkbox" id="useGroupID" class="toggle-input">
+                    <span class="toggle"></span>
+                    <span class="toggle-text">Usar Group ID</span>
+                </div>
+
+                <label class="label">Group ID</label>
+                <input id="telegramGroupID" class="input" type="text" disabled>
+
+                <button id="saveTelegramBtn" class="btn primary" style="margin-bottom:10px;">Guardar</button>
+
+                <!-- NUEVO BOTÓN DE PRUEBA -->
+                <button id="testTelegramBtn" class="btn" style="
+                    background:#1e293b;
+                    color:white;
+                    width:100%;
+                    margin-top:5px;
+                    border:1px solid var(--card-border);
+                ">
+                    Enviar mensaje de prueba
+                </button>
+            </div>
+
+
+            <!-- PROXIMAMENTE 
+            <div class="card monitor-card">
+                <h2>🚀 Próximas Funciones</h2>
+                <p>Integraciones avanzadas próximamente…</p>
+            </div>-->
+
+        </section>
+    </div>
+
+    <!-- LOADER -->
+    <div id="loader" class="loader-overlay hidden">
+        <div class="loader"></div>
+    </div>
+
+    <!-- TOAST -->
+    <div id="toast" class="toast hidden">
+        <span id="toastMessage"></span>
+    </div>
+
+    <!-- MODAL ADVERTENCIA -->
+    <div id="restartModal" class="modal hidden">
+        <div class="modal-content">
+            <h2>Reinicio requerido</h2>
+            <p>Como cambiaste el token de Telegram, es necesario reiniciar la tarjeta para aplicar los cambios.</p>
+
+            <button id="modalClose" class="btn btn-modal">Aceptar</button>
+        </div>
+    </div>
+
+</body>
+</html>

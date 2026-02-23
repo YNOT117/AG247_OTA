@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Configuración</title>
+
+  <link rel="stylesheet" href="../assets/css/configuracion.css" />
+  <script src="../assets/js/configuracion.js" defer></script>
+</head>
+
+<body>
+
+  <!-- Sidebar -->
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-header">
+      <img src="../Logo.png" class="sidebar-logo" alt="Agranel" />
+      <h2 class="sidebar-title">Panel</h2>
+    </div>
+
+    <nav class="sidebar-nav">
+      <a href="dashboard.html">📊 Dashboard</a>
+      <a href="ventas.html">💰 Ventas</a>
+      <a href="inventario.html">📦 Inventario</a>
+      <a class="active" href="configuracion.html">⚙️ Configuración</a>
+      <a href="monitoreo.html">📡 Monitoreo</a>
+      <a id="logout">🚪 Cerrar sesión</a>
+    </nav>
+  </aside>
+
+  <div id="overlay" class="overlay"></div>
+
+  <!-- Main -->
+  <div class="main">
+    <header class="topbar">
+      <button id="menuBtn" class="menu-btn">☰</button>
+      <h1 class="topbar-title">Configuración</h1>
+      <span id="status" class="status-dot offline"></span>
+    </header>
+
+    <section class="content">
+
+      <!-- TABS -->
+      <div class="tabs">
+        <button class="tab-btn active" data-tab="basic">Configuración básica</button>
+        <button class="tab-btn" data-tab="calibracion">Calibración</button>
+        <button class="tab-btn" data-tab="pruebas">Pruebas</button>
+        <button class="tab-btn" data-tab="nfc">Monedero NFC</button>
+      </div>
+
+      <!-- Contenedores -->
+      <div class="tab-content active" id="tab-basic">
+        <div class="card">
+          <h2>Configuración básica</h2>
+          <p>
+            ⚙️ <b>Configuración inicial:</b><br>
+            Antes de usar el sistema, es importante establecer los parámetros básicos de tu máquina.<br><br>
+            👉 El asistente te ayudará a configurar:<br>
+            • 🏭 Tipo de máquina<br>
+            • 📦 Cantidad de productos<br>
+            • 💳 Métodos de pago<br>
+          </p>
+          <button id="openWizardBtn" class="wizard-btn primary">Iniciar configuración</button>
+        </div>
+      </div>
+
+      <div class="tab-content" id="tab-calibracion">
+
+        <!-- CARD superior: título y texto -->
+        <div class="card">
+          <h2>Calibración</h2>
+          <p>Selecciona un producto de la lista para iniciar el proceso de calibración.</p>
+        </div>
+
+        <!-- CONTENEDOR donde van LAS CARDS DE PRODUCTO -->
+        <div id="calibracionContainer" class="calibration-grid"></div>
+
+      </div>
+
+      <div class="tab-content" id="tab-pruebas">
+        <div class="card">
+          <h2>Pruebas</h2>
+          <p>Herramientas de prueba próximamente…</p>
+        </div>
+      </div>
+
+      <div class="tab-content" id="tab-nfc">
+
+        <h2 class="section-title">Monedero NFC</h2>
+        <p class="section-desc">Lista de tarjetas registradas en el sistema.</p>
+
+        <!-- CONTENEDOR DE TAGS -->
+        <div id="nfcContainer" class="nfc-grid"></div>
+
+        <!-- BOTÓN FLOTANTE PARA AGREGAR -->
+        <button id="addNfcBtn" class="floating-btn">+</button>
+
+      </div>
+
+      <!-- MODAL: ESPERANDO TAG -->
+      <div id="nfcModal" class="modal hidden">
+        <div class="modal-content">
+            <h2>Agregar nueva tarjeta NFC</h2>
+
+            <p id="nfcStatusText">Acerque una tarjeta NFC al lector...</p>
+
+            <div class="nfc-wave"></div>
+
+            <button id="nfcCloseBtn" class="close-modal">Cerrar</button>
+        </div>
+      </div>
+
+
+    </section>
+  </div>
+
+  <div id="loader" class="loader-overlay hidden">
+    <div class="loader"></div>
+  </div>
+
+  <div id="toast" class="toast hidden">
+    <span id="toastIcon"></span>
+    <span id="toastMessage"></span>
+  </div>
+
+
+    <!-- ===========================
+      MODAL CALIBRACIÓN
+  =========================== -->
+  <div id="calibModal" class="calib-overlay hidden">
+    <div class="calib-modal">
+
+      <button id="calibCloseBtn" class="calib-close">✖</button>
+
+      <h2 id="calibTitle">Calibración de: HIELO 10Kg</h2>
+
+      <div class="calib-buttons">
+        <button id="btnPurgar" class="calib-btn warn">⬆ PURGAR</button>
+        <button id="btnIniciar" class="calib-btn start">▶ INICIAR CALIBRACIÓN</button>
+        <button id="btnDetener" class="calib-btn stop">⏸ DETENER</button>
+      </div>
+
+      <!-- Animación de ondas -->
+      <div id="calibWave" class="wave hidden"></div>
+
+    </div>
+  </div>
+
+
+  <!-- ===========================
+      MODAL WIZARD CONFIGURACIÓN
+  =========================== -->
+    <div id="configWizardModal" class="wizard-overlay hidden">
+      <div class="wizard-modal">
+        <button id="wizardCloseBtn" class="wizard-close-btn">✖</button>
+
+        <!-- Barra de progreso -->
+        <div class="wizard-progress">
+          <div id="wizardProgressBar" class="wizard-progress-bar"></div>
+        </div>
+
+        <!-- Contenedor del contenido -->
+        <div id="wizardStepContent" class="wizard-content">
+          <!-- JS irá cambiando el contenido aquí -->
+        </div>
+
+        <!-- Controles -->
+        <div class="wizard-controls">
+          <button id="wizardPrevBtn" class="wizard-btn secondary">Anterior</button>
+          <button id="wizardNextBtn" class="wizard-btn primary">Siguiente</button>
+        </div>
+
+      </div>
+    </div>
+
+
+</body>
+</html>

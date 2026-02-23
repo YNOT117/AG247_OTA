@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>⚙️ Configuración guardada</title>
+
+  <style>
+    body {
+      margin: 0;
+      background: #0f172a;
+      color: #e5e7eb;
+      font-family: system-ui, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      text-align: center;
+      padding: 16px;
+    }
+
+    .card {
+      background: #0b1120;
+      border: 1px solid rgba(148,163,184,0.25);
+      border-radius: 18px;
+      padding: 32px;
+      width: 90%;
+      max-width: 420px;
+      box-shadow: 0 8px 25px rgba(0,0,0,0.35);
+      opacity: 1;
+      transition: opacity .6s ease;
+    }
+
+    .hidden { opacity: 0; pointer-events: none; }
+
+    h1 { font-size: 1.4rem; margin-bottom: 10px; }
+    h2 { font-size: 1.2rem; }
+    p  { color: #94a3b8; margin-bottom: 14px; }
+
+    .loader {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      border: 4px solid rgba(148,163,184,0.25);
+      border-top-color: #ff7a1a;
+      border-right-color: #0055b8;
+      animation: spin .8s linear infinite;
+      margin: 0 auto 14px;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    #finalMessage { display: none; }
+
+    #deviceLink {
+      color: #ff7a1a;
+      font-size: 1.15rem;
+      font-weight: bold;
+      text-decoration: none;
+    }
+
+    .btn {
+      margin-top: 20px;
+      padding: 12px 20px;
+      border-radius: 12px;
+      border: none;
+      width: 100%;
+      font-size: 1rem;
+      cursor: pointer;
+      background: linear-gradient(135deg, #ff7a1a, #0055b8);
+      color: white;
+      transition: .2s;
+      opacity: 1;
+    }
+
+    .btn:disabled {
+      background: #3b4252;
+      cursor: not-allowed;
+      opacity: 0.5;
+    }
+
+    .online {
+      color: #22c55e;
+      font-weight: bold;
+      margin-top: 10px;
+      font-size: 1rem;
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Pantalla 1 -->
+  <div id="loadingCard" class="card">
+    <div class="loader"></div>
+    <h1>💾 Guardando configuración...</h1>
+    <p>🔄 El dispositivo se reiniciará automáticamente.</p>
+  </div>
+
+  <!-- Pantalla 2 -->
+  <div id="finalMessage" class="card hidden">
+    <h1>✔️ Configuración guardada</h1>
+
+    <p style="font-size:1.05rem; margin-top:10px;">
+      👉 Puedes continuar la configuración en:
+    </p>
+
+    <a id="deviceLink" href="#" target="_blank"></a>
+
+    <p style="margin-top:14px; font-size:0.95rem;">
+      📶 Asegúrate de estar conectado a la <b>misma red WiFi</b>  
+      y espera a que el dispositivo inicie correctamente.
+    </p>
+
+    <p style="margin-top:14px; font-size:0.95rem;">
+      🔐 Al acceder al panel, se solicitarán credenciales:<br>
+      Usuario: <b>admin</b><br>
+      Contraseña: <b>1234</b><br>
+      Podrás cambiarlas en <b>📡 Monitoreo</b> dentro del panel.
+    </p>
+
+    <p id="estadoConexion"></p>
+
+    <button id="openBtn" class="btn" disabled>🚀 Abrir panel</button>
+  </div>
+
+<script>
+  // Leer parámetros
+  const params = new URLSearchParams(window.location.search);
+  const nombre = params.get("name")?.trim() || "";
+
+  const dominio = `http://agranelpanel-${nombre}.local`;
+
+  const urlTexto = document.getElementById("deviceLink");
+  const openBtn = document.getElementById("openBtn");
+  const estadoConexion = document.getElementById("estadoConexion");
+
+  urlTexto.textContent = dominio;
+  urlTexto.href = dominio;
+
+  // Transición de pantallas
+  setTimeout(() => {
+    document.getElementById("loadingCard").classList.add("hidden");
+
+    setTimeout(() => {
+      document.getElementById("loadingCard").style.display = "none";
+
+      const final = document.getElementById("finalMessage");
+      final.style.display = "block";
+
+      setTimeout(() => final.classList.remove("hidden"), 50);
+    }, 600);
+
+  }, 7000);
+
+  // Verificar cuando el ESP32 esté en línea
+  async function verificar() {
+    try {
+      const res = await fetch(dominio + "/ping", { method: "GET", mode: "no-cors" });
+
+      estadoConexion.textContent = "🟢 Tu máquina está en línea";
+      estadoConexion.classList.add("online");
+      openBtn.disabled = false;
+      return true;
+
+    } catch (err) {
+      estadoConexion.textContent = "🔎 Buscando el dispositivo...";
+      return false;
+    }
+  }
+
+  // Cada 2 segundos verificamos
+  setInterval(verificar, 2000);
+  verificar();
+
+  openBtn.addEventListener("click", () => {
+    window.location.href = dominio;
+  });
+
+</script>
+
+</body>
+</html>

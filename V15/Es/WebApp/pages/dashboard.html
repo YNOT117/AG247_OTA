@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Panel – Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="stylesheet" href="../assets/css/dashboard.css" />
+  <script src="../assets/js/dashboard.js" defer></script>
+</head>
+
+<body>
+
+  <!-- Sidebar -->
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-header">
+      <img src="../Logo.png" class="sidebar-logo" alt="Agranel" />
+      <h2 class="sidebar-title">Panel</h2>
+    </div>
+
+    <nav class="sidebar-nav">
+      <a href="dashboard.html" class="active">📊 Dashboard</a>
+      <a href="ventas.html">💰 Ventas</a>
+      <a href="inventario.html">📦 Inventario</a>
+      <a href="configuracion.html">⚙️ Configuración</a>
+      <a href="monitoreo.html">📡 Monitoreo</a>
+      <a id="logout">🚪 Cerrar sesión</a>
+    </nav>
+  </aside>
+
+  <!-- Overlay (móvil) -->
+  <div id="overlay" class="overlay"></div>
+
+  <!-- Contenedor principal -->
+  <div class="main">
+
+    <!-- Barra superior -->
+    <header class="topbar">
+      <button id="menuBtn" class="menu-btn">☰</button>
+      <h1 class="topbar-title">Dashboard general</h1>
+      <span id="status" class="status-dot offline"></span>
+    </header>
+
+    <!-- Contenido -->
+    <section class="content">
+
+      <!-- Tarjetas principales -->
+      <div class="cards">
+
+        <div class="card">
+          <h3>Total del día</h3>
+          <p id="ventaDia" class="big-number">$0.00</p>
+        </div>
+
+        <div class="card">
+          <h3>Ventas totales</h3>
+          <p id="ventasTotales" class="big-number">0</p>
+        </div>
+
+        <div class="card">
+          <h3>Última venta</h3>
+          <p id="ultimaVenta" class="big-number">—</p>
+        </div>
+
+        <div class="card">
+          <h3>Estado</h3>
+          <p id="estadoMaquina" class="big-number">Desconocido</p>
+        </div>
+
+      </div>
+
+      <!-- Sección de gráficas -->
+      <div class="charts-box">
+        <h2 class="section-title">Estadísticas recientes</h2>
+
+        <div id="chartVentas" class="chart-container">
+            <canvas id="chart7dias"></canvas> 
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+   <!-- Loader -->
+  <div id="loader" class="loader-overlay">
+    <div class="loader"></div>
+  </div>
+
+</body>
+</html>
