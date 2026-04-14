@@ -1,268 +1,214 @@
 document.addEventListener("DOMContentLoaded", async () => {
+  // 🔥 Mostrar loader al entrar a la página
+  showLoader();
+  const logout = document.getElementById("logout");
+  validarSesion();
 
-    /* ============================================================
-       REFERENCIAS GENERALES
-    ============================================================ */
-    const loader = document.getElementById("loader");
-    const toast = document.getElementById("toast");
-    const restartModal = document.getElementById("restartModal");
-    const modalClose = document.getElementById("modalClose");
+  await cargarDatos();
+  initEventos();
 
-    const sidebar = document.getElementById("sidebar");
-    const menuBtn = document.getElementById("menuBtn");
-    const overlay = document.getElementById("overlay");
-    const logout = document.getElementById("logout");
+  // 🔥 Ocultar loader SOLO cuando todo terminó de cargar
+  hideLoader();
+});
 
-    const statusDot = document.getElementById("status");
+ /* -----------------------------------------
+      CERRAR SESIÓN
+  ----------------------------------------- */
+  logout.addEventListener("click", () => {
+    localStorage.removeItem("token");
+    window.location.href = "../index.html";
+  });
 
-    // Telegram
-    const inputToken = document.getElementById("telegramToken");
-    const inputChatID = document.getElementById("telegramChatID");
-    const inputGroupID = document.getElementById("telegramGroupID");
-    const toggleGroup = document.getElementById("useGroupID");
-    const saveBtn = document.getElementById("saveTelegramBtn");
+
+/* ================= RSSI ================= */
+function formatearRSSI(rssi) {
+  if (rssi === undefined || rssi === null) return "--";
+
+  let calidad = "";
+  let color = "";
+  let icono = "";
+
+  if (rssi >= -60) {
+    calidad = "Excelente";
+    color = "#22c55e";
+    icono = "📶📶📶📶";
+  } else if (rssi >= -70) {
+    calidad = "Buena";
+    color = "#84cc16";
+    icono = "📶📶📶";
+  } else if (rssi >= -80) {
+    calidad = "Regular";
+    color = "#f59e0b";
+    icono = "📶📶";
+  } else {
+    calidad = "Débil";
+    color = "#ef4444";
+    icono = "📶";
+  }
+
+  return `
+    <span style="color:${color}; font-weight:500;">
+      ${icono} ${rssi} dBm (${calidad})
+    </span>
+  `;
+}
+
+
+/* ================= CARGAR DATOS ================= */
+async function cargarDatos() {
+  try {
+    const res = await fetch("/monitor/datos");
+    const data = await res.json();
 
     // PCBA
-    const pcbaName = document.getElementById("pcbaName");
-    const pcbaUser = document.getElementById("pcbaUser");
-    const pcbaPass = document.getElementById("pcbaPass");
-    const savePcbaBtn = document.getElementById("savePcbaBtn");
+    pcbaName.value = data.name || "";
+    pcbaUser.value = data.userweblocal || "";
+    pcbaPass.value = data.passweblocal || "";
 
-    let originalToken = "";
+    // WIFI
+    monitorSSID.textContent = data.ssid || "--";
+    monitorRSSI.innerHTML = formatearRSSI(data.rssi);
+    monitorPASS.textContent = data.pass || "--";
+    monitorIP.textContent = data.ip || "--";
 
-    /* ============================================================
-       FUNCIONES AUXILIARES
-    ============================================================ */
-    function isMobile() {
-        return window.innerWidth <= 750;
+    // TELEGRAM
+    telegramToken.value = data.token || "";
+    telegramChatID.value = data.chatid || "";
+
+    if (data.groupid) {
+      telegramGroupID.value = data.groupid;
+      useGroupID.checked = true;
+      telegramGroupID.disabled = false;
     }
 
-    function showToast(msg) {
-        toast.textContent = msg;
-        toast.classList.remove("hidden");
-        toast.classList.add("show");
+  } catch {
+    showToast("Error al cargar datos", "error");
+  }
+}
 
-        setTimeout(() => {
-            toast.classList.remove("show");
-            setTimeout(() => toast.classList.add("hidden"), 300);
-        }, 2500);
-    }
 
-    /* ============================================================
-       LOADER EN CAMBIO DE PÁGINA
-    ============================================================ */
-    document.querySelectorAll(".sidebar-nav a").forEach(link => {
-        link.addEventListener("click", e => {
-            const url = link.getAttribute("href");
-            if (!url) return;
+/* ================= EVENTOS ================= */
+function initEventos() {
 
-            loader.classList.remove("hidden");
+  useGroupID.addEventListener("change", () => {
+    telegramGroupID.disabled = !useGroupID.checked;
+  });
 
-            if (isMobile()) {
-                sidebar.classList.remove("show");
-                overlay.classList.remove("show");
-            }
+  savePcbaBtn.onclick = guardarPCBA;
+  saveTelegramBtn.onclick = guardarTelegram;
+  testTelegramBtn.onclick = testTelegram;
 
-            e.preventDefault();
-            setTimeout(() => window.location.href = url, 200);
-        });
+  modalClose.onclick = reiniciarESP;
+}
+
+
+/* ================= GUARDAR PCBA ================= */
+async function guardarPCBA() {
+  try {
+    showLoader();
+
+    const res = await fetch("/monitor/pcba", {
+      method: "POST",
+      body: JSON.stringify({
+        name: pcbaName.value,
+        user: pcbaUser.value,
+        pass: pcbaPass.value
+      })
     });
 
-    /* ============================================================
-       MENÚ HAMBURGUESA
-    ============================================================ */
-    menuBtn.addEventListener("click", () => {
-        if (isMobile()) {
-            sidebar.classList.toggle("show");
-            overlay.classList.toggle("show");
-        } else {
-            sidebar.classList.toggle("collapsed");
-        }
+    if (!res.ok) throw new Error();
+
+    showToast("Guardado correctamente", "success");
+
+  } catch {
+    showToast("Error al guardar", "error");
+  } finally {
+    hideLoader();
+  }
+}
+
+
+/* ================= GUARDAR TELEGRAM ================= */
+async function guardarTelegram() {
+  try {
+    showLoader();
+
+    const res = await fetch("/monitor/saveTelegram", {
+      method: "POST",
+      body: JSON.stringify({
+        token: telegramToken.value,
+        chatid: telegramChatID.value,
+        groupid: useGroupID.checked ? telegramGroupID.value : ""
+      })
     });
 
-    overlay.addEventListener("click", () => {
-        sidebar.classList.remove("show");
-        overlay.classList.remove("show");
+    if (!res.ok) throw new Error();
+
+    mostrarModalReinicio();
+
+  } catch {
+    showToast("Error Telegram", "error");
+  } finally {
+    hideLoader();
+  }
+}
+
+
+/* ================= TEST TELEGRAM ================= */
+async function testTelegram() {
+  try {
+    showLoader();
+
+    const res = await fetch("/monitor/TelegramTest", {
+      method: "POST"
     });
 
-    /* ============================================================
-       LOGOUT
-    ============================================================ */
-    logout.addEventListener("click", () => {
-        localStorage.removeItem("token");
-        window.location.href = "../index.html";
+    if (!res.ok) throw new Error();
+
+    showToast("Mensaje enviado", "success");
+
+  } catch {
+    showToast("Error al enviar", "error");
+  } finally {
+    hideLoader();
+  }
+}
+
+
+/* ================= MODAL ================= */
+function mostrarModalReinicio() {
+  restartModal.classList.remove("hidden");
+}
+
+function cerrarModal() {
+  restartModal.classList.add("hidden");
+}
+
+
+/* ================= REINICIAR ESP ================= */
+async function reiniciarESP() {
+  try {
+    showLoader();
+
+    await fetch("/monitor/restart", {
+      method: "POST"
     });
 
-    /* ============================================================
-       VALIDAR SESIÓN
-    ============================================================ */
-    const token = localStorage.getItem("token");
-    if (!token) {
-        window.location.href = "../index.html";
-        return;
-    }
+    cerrarModal();
 
-    /* ============================================================
-       INDICADOR DE CONEXIÓN
-    ============================================================ */
-    async function verificarConexion() {
-        if (!statusDot) return;
+    // 🔴 FORZAR estado offline inmediatamente
+    status.classList.remove("online");
+    status.classList.add("offline");
 
-        try {
-            await fetch("/ping");
-            statusDot.classList.replace("offline", "online");
-        } catch {
-            statusDot.classList.replace("online", "offline");
-        }
-    }
+    // 🔥 Toast indicando espera de reconexión
+    showToast("Esperando reconexión...", "info");
 
-    setInterval(verificarConexion, 3000);
-    verificarConexion();
+    // ❌ NO recargar la página
+    // 👉 global.js se encargará de volver a poner en verde automáticamente
 
-    /* ============================================================
-       CARGAR DATOS DE /monitor/datos
-    ============================================================ */
-    async function cargarDatos() {
-        loader.classList.remove("hidden");
-
-        try {
-            const r = await fetch("/monitor/datos");
-            const data = await r.json();
-
-            // ---- PCBA ----
-            pcbaName.value = data.name || "";
-            pcbaUser.value = data.userweblocal || "";
-            pcbaPass.value = data.passweblocal || "";
-
-            // ---- WIFI ----
-            document.getElementById("monitorSSID").textContent = data.ssid;
-            document.getElementById("monitorPASS").textContent = data.pass;
-            document.getElementById("monitorIP").textContent = data.ip;
-
-            // ---- TELEGRAM ----
-            inputToken.value = data.token || "";
-            inputChatID.value = data.chatid || "";
-            originalToken = data.token;
-
-            if (data.groupid !== -1 && data.groupid !== "") {
-                toggleGroup.checked = true;
-                inputGroupID.disabled = false;
-                inputGroupID.value = data.groupid;
-            } else {
-                toggleGroup.checked = false;
-                inputGroupID.disabled = true;
-                inputGroupID.value = "";
-            }
-
-        } catch (err) {
-            console.error(err);
-            showToast("Error cargando datos");
-        }
-
-        loader.classList.add("hidden");
-    }
-
-    cargarDatos();
-
-    /* ============================================================
-       TOGGLE GROUP ID
-    ============================================================ */
-    toggleGroup.addEventListener("change", () => {
-        inputGroupID.disabled = !toggleGroup.checked;
-
-        if (inputGroupID.disabled) {
-            inputGroupID.value = "";
-        }
-    });
-
-    /* ============================================================
-       GUARDAR TELEGRAM
-    ============================================================ */
-    saveBtn.onclick = async () => {
-
-        loader.classList.remove("hidden");
-
-        const payload = {
-            token: inputToken.value.trim(),
-            chatid: inputChatID.value.trim(),
-            groupid: toggleGroup.checked ? inputGroupID.value.trim() : ""
-        };
-
-        const resp = await fetch("/monitor/saveTelegram", {
-            method: "POST",
-            headers: {"Content-Type": "application/json"},
-            body: JSON.stringify(payload)
-        });
-
-        loader.classList.add("hidden");
-
-        if (resp.ok) {
-            showToast("Datos guardados");
-
-            if (originalToken !== payload.token) {
-                restartModal.classList.remove("hidden");
-            }
-        } else {
-            showToast("Error al guardar");
-        }
-    };
-
-    modalClose.onclick = () => {
-        restartModal.classList.add("hidden");
-    };
-
-    // ===== Enviar mensaje de prueba =====
-    const testBtn = document.getElementById("testTelegramBtn");
-
-    testBtn.onclick = async () => {
-        loader.classList.remove("hidden");
-
-        try {
-            const resp = await fetch("/monitor/TelegramTest", {
-                method: "POST"
-            });
-
-            loader.classList.add("hidden");
-
-            if (resp.ok) {
-                showToast("Mensaje de prueba enviado");
-            } else {
-                showToast("Error enviando mensaje de prueba");
-            }
-
-        } catch (err) {
-            loader.classList.add("hidden");
-            showToast("Error de conexión");
-        }
-    };
-
-
-    /* ============================================================
-       GUARDAR PCBA
-    ============================================================ */
-    savePcbaBtn.onclick = async () => {
-
-        loader.classList.remove("hidden");
-
-        const body = {
-            name: pcbaName.value.trim(),
-            user: pcbaUser.value.trim(),
-            pass: pcbaPass.value.trim()
-        };
-
-        const resp = await fetch("/monitor/pcba", {
-            method: "POST",
-            headers: {"Content-Type": "application/json"},
-            body: JSON.stringify(body)
-        });
-
-        loader.classList.add("hidden");
-
-        if (resp.ok) {
-            showToast("Datos guardados");
-        } else {
-            showToast("Error al guardar");
-        }
-    };
-
-});
+  } catch {
+    showToast("Error al reiniciar", "error");
+  } finally {
+    hideLoader();
+  }
+}

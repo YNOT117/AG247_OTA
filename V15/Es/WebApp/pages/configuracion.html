@@ -3,176 +3,333 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Configuración</title>
+  <title>Panel – Configuración</title>
 
-  <link rel="stylesheet" href="../assets/css/configuracion.css" />
+  <link rel="stylesheet" href="../assets/css/global.css">
+  <link rel="stylesheet" href="../assets/css/configuracion.css">
+
+  <script src="../assets/js/global.js" defer></script>
   <script src="../assets/js/configuracion.js" defer></script>
 </head>
 
 <body>
 
-  <!-- Sidebar -->
-  <aside id="sidebar" class="sidebar">
-    <div class="sidebar-header">
-      <img src="../Logo.png" class="sidebar-logo" alt="Agranel" />
-      <h2 class="sidebar-title">Panel</h2>
-    </div>
+  <div class="layout">
 
-    <nav class="sidebar-nav">
-      <a href="dashboard.html">📊 Dashboard</a>
-      <a href="ventas.html">💰 Ventas</a>
-      <a href="inventario.html">📦 Inventario</a>
-      <a class="active" href="configuracion.html">⚙️ Configuración</a>
-      <a href="monitoreo.html">📡 Monitoreo</a>
-      <a id="logout">🚪 Cerrar sesión</a>
-    </nav>
-  </aside>
-
-  <div id="overlay" class="overlay"></div>
-
-  <!-- Main -->
-  <div class="main">
-    <header class="topbar">
-      <button id="menuBtn" class="menu-btn">☰</button>
-      <h1 class="topbar-title">Configuración</h1>
-      <span id="status" class="status-dot offline"></span>
-    </header>
-
-    <section class="content">
-
-      <!-- TABS -->
-      <div class="tabs">
-        <button class="tab-btn active" data-tab="basic">Configuración básica</button>
-        <button class="tab-btn" data-tab="calibracion">Calibración</button>
-        <button class="tab-btn" data-tab="pruebas">Pruebas</button>
-        <button class="tab-btn" data-tab="nfc">Monedero NFC</button>
+    <!-- SIDEBAR GLOBAL -->
+    <aside class="sidebar">
+      <div class="logo">
+        <img src="/Logo.png" alt="Agranel">
+        <h2>Panel</h2>
       </div>
 
-      <!-- Contenedores -->
-      <div class="tab-content active" id="tab-basic">
+      <nav class="menu">
+        <a href="dashboard.html" class="item">📊 Dashboard</a>
+        <a href="ventas.html" class="item">💰 Ventas</a>
+        <a href="inventario.html" class="item">📦 Inventario</a>
+        <a href="configuracion.html" class="item active">⚙️ Configuración</a>
+        <a href="monitoreo.html" class="item">📡 Monitoreo</a>
+        <a id="logout" class="item">🚪 Cerrar sesión</a>
+
+        <!-- TOGGLE -->
+        <div class="theme-toggle">
+          <span>🌙 Modo claro</span>
+          <label class="switch">
+            <input type="checkbox" id="themeSwitch">
+            <span class="slider"></span>
+          </label>
+        </div>
+      </nav>
+    </aside>
+
+    <div id="overlay" class="overlay"></div>
+
+    <!-- MAIN -->
+    <main class="main">
+
+      <header class="topbar">
+        <button id="menuBtn" class="menu-btn">☰</button>
+        <h1>Configuración</h1>
+        <span id="status" class="status-dot offline"></span>
+      </header>
+
+      <section class="content">
+
+        <!-- =========================
+             TAB 1: BÁSICO
+        ========================== -->
+        <div id="tab-basic" class="tab-content active">
+
+          <h2 class="section-title">Configuración básica</h2>
+          <p class="section-subtitle">Ajustes principales del sistema</p>
+
+          <div class="card">
+            <div class="settings-group">
+              <p class="section-subtitle">Maquina</p>
+              <!-- TIPO DE MÁQUINA -->
+              <div class="setting">
+                <label>Tipo de máquina</label>
+
+                <div class="custom-select" id="TipoUI">
+
+                  <!-- TRIGGER -->
+                  <div class="custom-select-trigger">
+                    <span>Seleccionar tipo</span>
+                    <div class="arrow">▼</div>
+                  </div>
+
+                  <!-- OPCIONES -->
+                  <div class="custom-options">
+
+                    <div class="custom-option" data-value="limpieza">🧴 Productos de limpieza</div>
+                    <div class="custom-option" data-value="croquetas">🐶 Croquetas para mascotas</div>
+                    <div class="custom-option" data-value="duo">💧❄️ Purificadora DUO</div>
+                    <div class="custom-option" data-value="agua">💧 Solo agua purificada</div>
+                    <div class="custom-option" data-value="hielo">❄️ Solo hielo purificado</div>
+                    <div class="custom-option" data-value="granos">🌾 Granos y semillas</div>
+                    <div class="custom-option" data-value="carro">🚗 Jabón automotriz</div>
+
+                  </div>
+
+                </div>
+              </div>
+
+              <!-- PRODUCTOS -->
+              <div class="setting">
+                <label>Cantidad de productos</label>
+
+                <div class="stepper" id="ProductosStepper">
+                  <button class="step-btn" id="btnMinus">−</button>
+                  <span id="ProductosValue">1</span>
+                  <button class="step-btn" id="btnPlus">+</button>
+                </div>
+
+              </div>
+
+            </div>
+        </div>
+          <!-- PAGOS -->
         <div class="card">
-          <h2>Configuración básica</h2>
-          <p>
-            ⚙️ <b>Configuración inicial:</b><br>
-            Antes de usar el sistema, es importante establecer los parámetros básicos de tu máquina.<br><br>
-            👉 El asistente te ayudará a configurar:<br>
-            • 🏭 Tipo de máquina<br>
-            • 📦 Cantidad de productos<br>
-            • 💳 Métodos de pago<br>
-          </p>
-          <button id="openWizardBtn" class="wizard-btn primary">Iniciar configuración</button>
+          <p class="section-subtitle">Métodos de pago disponibles</p>
+          <div class="settings-group">
+
+            <!-- MONEDERO -->
+            <div class="setting">
+              <label>Monedero</label>
+
+              <label class="switch">
+                <input type="checkbox" id="MonederoType" checked>
+                <span class="slider"></span>
+              </label>
+            </div>
+
+            <!-- BILLETERO -->
+            <div class="setting">
+              <label>Billetero</label>
+
+              <label class="switch">
+                <input type="checkbox" id="BilleteroType">
+                <span class="slider"></span>
+              </label>
+            </div>
+
+            <!-- NAYAX -->
+            <div class="setting">
+              <label>Nayax</label>
+
+              <label class="switch">
+                <input type="checkbox" id="NayaxState">
+                <span class="slider"></span>
+              </label>
+            </div>
+
+            <!-- NFC -->
+            <div class="setting">
+              <label>NFC</label>
+
+              <label class="switch">
+                <input type="checkbox" id="NFC532">
+                <span class="slider"></span>
+              </label>
+            </div>
+
+          </div>
+
         </div>
-      </div>
 
-      <div class="tab-content" id="tab-calibracion">
-
-        <!-- CARD superior: título y texto -->
+   
+        <!-- SISTEMA -->
         <div class="card">
-          <h2>Calibración</h2>
-          <p>Selecciona un producto de la lista para iniciar el proceso de calibración.</p>
+
+          <!-- <h2>Sistema</h2> -->
+           <p>Sistema</p>
+          <!-- <p class="section-subtitle">Configuración del sistema</p> -->
+
+          <div class="settings-group">
+
+            <!-- AUDIO -->
+            <div class="setting">
+              <label>Audio</label>
+
+              <label class="switch">
+                <input type="checkbox" id="AudioActivo">
+                <span class="slider"></span>
+              </label>
+            </div>
+
+            <!-- VOLUMEN -->
+            <div class="setting">
+              <label>Volumen</label>
+
+              <div class="volume-control">
+                <input type="range" id="Volumen" min="0" max="100">
+                <span id="VolumenValue">50%</span>
+              </div>
+            </div>
+
+          </div>
+
         </div>
 
-        <!-- CONTENEDOR donde van LAS CARDS DE PRODUCTO -->
-        <div id="calibracionContainer" class="calibration-grid"></div>
-
-      </div>
-
-      <div class="tab-content" id="tab-pruebas">
-        <div class="card">
-          <h2>Pruebas</h2>
-          <p>Herramientas de prueba próximamente…</p>
+          <!-- BOTÓN GUARDAR -->
+        <div class="save-container">
+          <button id="saveConfigBtn" class="btn btn-primary btn-block">
+            💾 Guardar configuración
+          </button>
         </div>
-      </div>
 
-      <div class="tab-content" id="tab-nfc">
-
-        <h2 class="section-title">Monedero NFC</h2>
-        <p class="section-desc">Lista de tarjetas registradas en el sistema.</p>
-
-        <!-- CONTENEDOR DE TAGS -->
-        <div id="nfcContainer" class="nfc-grid"></div>
-
-        <!-- BOTÓN FLOTANTE PARA AGREGAR -->
-        <button id="addNfcBtn" class="floating-btn">+</button>
-
-      </div>
-
-      <!-- MODAL: ESPERANDO TAG -->
-      <div id="nfcModal" class="modal hidden">
-        <div class="modal-content">
-            <h2>Agregar nueva tarjeta NFC</h2>
-
-            <p id="nfcStatusText">Acerque una tarjeta NFC al lector...</p>
-
-            <div class="nfc-wave"></div>
-
-            <button id="nfcCloseBtn" class="close-modal">Cerrar</button>
         </div>
+
+        <!-- =========================
+            TAB 2: CALIBRACIÓN
+        ========================= -->
+        <div id="tab-calibracion" class="tab-content">
+
+          <div class="card">
+
+            <h2>Configuración</h2>
+            <p class="section-subtitle">Aquí podrás calibrar tus productos</p>
+
+            <div class="settings-group">
+
+              <!-- SELECT PRODUCTO -->
+              <div class="setting">
+                <label>Producto</label>
+
+                <div class="custom-select" id="ProductoSelect">
+
+                  <!-- TRIGGER -->
+                  <div class="custom-select-trigger">
+                    <span class="custom-text">Seleccionar producto</span>
+                    <div class="arrow">▼</div>
+                  </div>
+
+                  <!-- OPCIONES DINÁMICAS -->
+                  <div class="custom-options">
+                    <!-- 🔥 se llenará con JS -->
+                  </div>
+
+                </div>
+              </div>
+
+              <!-- BOTONES -->
+              <div class="setting">
+                <div style="display:flex; gap:10px;">
+
+                  <button id="btnCalibrar" class="btn btn-primary">
+                    ▶ Calibrar
+                  </button>
+
+                  <button id="btnDetener" class="btn btn-secondary">
+                    ⏹ Detener
+                  </button>
+
+                  <button id="btnPurgar" class="btn btn-primary">
+                    💨 Purgar
+                  </button>
+
+                </div>
+              </div>
+
+              <!-- MODO CALIBRACIÓN -->
+              <div class="setting">
+                <label>Modo calibración</label>
+
+                <label class="switch">
+                  <input type="checkbox" id="modoCalibracion">
+                  <span class="slider"></span>
+                </label>
+              </div>
+
+            </div>
+
+          </div>
+
+        </div>
+
+        <!-- =========================
+             TAB 3: NFC
+        ========================== -->
+        <div id="tab-nfc" class="tab-content">
+          <h2 class="section-title">Monedero NFC</h2>
+
+          <div id="nfcContainer" class="cards-mobile"></div>
+
+          <!-- <button id="addNfcBtn" class="floating-btn">＋</button> -->
+        </div>
+
+        
+        <!-- =========================
+             TAB 4: FUNCIONES
+        ========================== -->
+        <!-- <div id="tab-funciones" class="tab-content">
+          <div class="card">
+            <h2>Funciones del sistema</h2>
+            <p>Configuraciones avanzadas y activación de módulos</p>
+          </div>
+        </div> -->
+
+      </section>
+
+      <!-- 🔥 FOOTER NAV (TABS APP) -->
+      <div class="bottom-tabs">
+        <!-- <div class="tab-indicator"></div> -->
+
+        <button class="tab-btn active" data-tab="basic">
+          <span>⚙️</span>
+          <small>Básico</small>
+        </button>
+
+        <button class="tab-btn" data-tab="calibracion">
+          <span>🎯</span>
+          <small>Calibración</small>
+        </button>
+
+        <!-- <button class="tab-btn" data-tab="funciones">
+          <span>🧠</span>
+          <small>Funciones</small>
+        </button> -->
+
+        <button class="tab-btn" data-tab="nfc">
+          <span>💳</span>
+          <small>NFC</small>
+        </button>
+
       </div>
 
+    </main>
 
-    </section>
   </div>
 
-  <div id="loader" class="loader-overlay hidden">
+  <!-- LOADER GLOBAL -->
+  <div id="globalLoader" class="loader-overlay hidden">
     <div class="loader"></div>
   </div>
 
+  <!-- TOAST -->
   <div id="toast" class="toast hidden">
-    <span id="toastIcon"></span>
     <span id="toastMessage"></span>
   </div>
-
-
-    <!-- ===========================
-      MODAL CALIBRACIÓN
-  =========================== -->
-  <div id="calibModal" class="calib-overlay hidden">
-    <div class="calib-modal">
-
-      <button id="calibCloseBtn" class="calib-close">✖</button>
-
-      <h2 id="calibTitle">Calibración de: HIELO 10Kg</h2>
-
-      <div class="calib-buttons">
-        <button id="btnPurgar" class="calib-btn warn">⬆ PURGAR</button>
-        <button id="btnIniciar" class="calib-btn start">▶ INICIAR CALIBRACIÓN</button>
-        <button id="btnDetener" class="calib-btn stop">⏸ DETENER</button>
-      </div>
-
-      <!-- Animación de ondas -->
-      <div id="calibWave" class="wave hidden"></div>
-
-    </div>
-  </div>
-
-
-  <!-- ===========================
-      MODAL WIZARD CONFIGURACIÓN
-  =========================== -->
-    <div id="configWizardModal" class="wizard-overlay hidden">
-      <div class="wizard-modal">
-        <button id="wizardCloseBtn" class="wizard-close-btn">✖</button>
-
-        <!-- Barra de progreso -->
-        <div class="wizard-progress">
-          <div id="wizardProgressBar" class="wizard-progress-bar"></div>
-        </div>
-
-        <!-- Contenedor del contenido -->
-        <div id="wizardStepContent" class="wizard-content">
-          <!-- JS irá cambiando el contenido aquí -->
-        </div>
-
-        <!-- Controles -->
-        <div class="wizard-controls">
-          <button id="wizardPrevBtn" class="wizard-btn secondary">Anterior</button>
-          <button id="wizardNextBtn" class="wizard-btn primary">Siguiente</button>
-        </div>
-
-      </div>
-    </div>
-
 
 </body>
 </html>

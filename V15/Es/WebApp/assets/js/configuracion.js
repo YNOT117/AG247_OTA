@@ -1,77 +1,52 @@
-/* ==========================================================
-                    CONFIGURACIÓN.JS COMPLETO
-       Incluye TODA la lógica del dashboard.js + tabs internas
-       + MODAL WIZARD DE CONFIGURACIÓN
-========================================================== */
+document.addEventListener("DOMContentLoaded", () => {
 
-document.addEventListener("DOMContentLoaded", async () => {
+  showLoader();
+  const logout = document.getElementById("logout");
+  validarSesion();
 
-  
-  /* -----------------------------------------
-  ELEMENTOS DEL DOM
-  ----------------------------------------- */
-  const loader    = document.getElementById("loader");
-  const statusDot = document.getElementById("status");
-  const logout    = document.getElementById("logout");
-  const sidebar   = document.getElementById("sidebar");
-  const menuBtn   = document.getElementById("menuBtn");
-  const overlay   = document.getElementById("overlay");
-  
-  loader.classList.remove("hidden");
-  /* -----------------------------------------
-      VALIDAR SESIÓN
-  ----------------------------------------- */
-  const token = localStorage.getItem("token");
-  if (!token) {
-    window.location.href = "../index.html";
-    return;
-  }
+  const tabs = document.querySelectorAll(".tab-btn");
+  const contents = document.querySelectorAll(".tab-content");
 
-  /* -----------------------------------------
-      FUNCIÓN RESPONSIVE
-  ----------------------------------------- */
-  function isMobile() {
-    return window.innerWidth <= 750;
-  }
+  tabs.forEach(tab => {
+    tab.addEventListener("click", () => {
 
-  /* -----------------------------------------
-      NAVIGATION 
-  ----------------------------------------- */
-  document.querySelectorAll(".sidebar-nav a").forEach(link => {
-    const url = link.getAttribute("href");
-    if (!url || url === "#") return;
+      // activar botón
+      tabs.forEach(t => t.classList.remove("active"));
+      tab.classList.add("active");
 
-    link.addEventListener("click", e => {
-      document.getElementById("loader").classList.remove("hidden");
-      e.preventDefault();
+      // mostrar contenido
+      const id = tab.dataset.tab;
 
-      if (isMobile()) {
-        sidebar.classList.remove("show");
-        overlay.classList.remove("show");
+      contents.forEach(c => c.classList.remove("active"));
+      document.getElementById("tab-" + id).classList.add("active");
+
+      // 🔥 INIT SOLO SI ES BASIC
+      if (id === "basic") {
+        initConfiguracion();
+      }
+      if (id === "calibracion") {
+        initCalibracion();
+      }
+      if (id === "nfc") {
+        loadNFC();
       }
 
-      setTimeout(() => window.location.href = url, 200);
     });
   });
 
-  /* -----------------------------------------
-      MENÚ HAMBURGUESA
-  ----------------------------------------- */
-  menuBtn.addEventListener("click", () => {
-    if (isMobile()) {
-      sidebar.classList.toggle("show");
-      overlay.classList.toggle("show");
-    } else {
-      sidebar.classList.toggle("collapsed");
-    }
-  });
+  // 🔥 INIT SI YA ESTÁ ACTIVO AL CARGAR
+  const activeTab = document.querySelector(".tab-btn.active");
+  if (activeTab && activeTab.dataset.tab === "basic") {
+    initConfiguracion();
+  }
 
-  overlay.addEventListener("click", () => {
-    sidebar.classList.remove("show");
-    overlay.classList.remove("show");
-  });
+  initCalibracion();
 
-  /* -----------------------------------------
+  hideLoader();
+
+});
+
+ /* -----------------------------------------
       CERRAR SESIÓN
   ----------------------------------------- */
   logout.addEventListener("click", () => {
@@ -79,542 +54,1099 @@ document.addEventListener("DOMContentLoaded", async () => {
     window.location.href = "../index.html";
   });
 
-  /* -----------------------------------------
-      INDICADOR DE CONEXIÓN
-  ----------------------------------------- */
-  async function verificarConexion() {
-    if (!statusDot) return;
-
-    try {
-      await fetch("/ping");
-      statusDot.classList.replace("offline", "online");
-    } catch {
-      statusDot.classList.replace("online", "offline");
-    }
-  }
-
-  setInterval(verificarConexion, 3000);
-  verificarConexion();
-
-  /* -----------------------------------------
+   /* -----------------------------------------
       SSE (si aplica)
   ----------------------------------------- */
   let evt;
-  try {
-    evt = new EventSource("/events");
+try {
+  evt = new EventSource("/events");
 
-    evt.addEventListener("nuevaVenta", () => {
-      console.log("Evento recibido: nuevaVenta");
-    });
-
-    evt.addEventListener("nfcTagAdded", e => {
-      const uid = e.data;
-      nfcStatusText.textContent = `Etiqueta detectada: ${uid}`;
-      showToast("Tag agregado: " + uid, "success");
-      cargarTagsNFC();
-    });
-
-  } catch (err) {
-    console.warn("SSE no disponible.");
-  }
-
-  /* -----------------------------------------
-      TABS INTERNAS (CONFIGURACIÓN)
-  ----------------------------------------- */
-  const tabButtons  = document.querySelectorAll(".tab-btn");
-  const tabContents = document.querySelectorAll(".tab-content");
-
-  tabButtons.forEach(btn => {
-    btn.addEventListener("click", async () => {
-
-      loader.classList.remove("hidden");
-
-      const newTab = btn.dataset.tab;
-      const oldTab = document.querySelector(".tab-content.active")?.id.replace("tab-", "");
-
-      // 1️⃣ Si el usuario sale de CALIBRACIÓN → enviar exit al ESP
-      if (oldTab === "calibracion" && newTab !== "calibracion") {
-        console.log("Saliendo de calibración → /calibration/exit");
-        try {
-          await fetch("/calibration/exit");
-        } catch (e) {
-          console.warn("No se pudo notificar salida de calibración", e);
-        }
-      }
-
-      // 2️⃣ Cambio normal de pestañas
-      tabButtons.forEach(b => b.classList.remove("active"));
-      tabContents.forEach(t => t.classList.remove("active"));
-
-      btn.classList.add("active");
-      document.getElementById(`tab-${newTab}`).classList.add("active");
-
-      setTimeout(() => loader.classList.add("hidden"), 150);
-    });
+  evt.addEventListener("nuevaVenta", () => {
+    console.log("Evento recibido: nuevaVenta");
   });
 
+  evt.addEventListener("nfcTagAdded", e => {
+
+    // 🔥 parsear JSON correctamente
+    const data = JSON.parse(e.data);
+    const uid = data.uid;
+
+    console.log("Tag detectado:", uid);
+
+    // 🔥 feedback UI
+    showToast("Tag agregado: " + uid, "success");
+
+    // 🔥 recargar datos
+    loadNFC(); // (ojo: tu función actual es loadNFC, no cargarTagsNFC)
+
+  });
+
+} catch (err) {
+  console.warn("SSE no disponible.");
+}
+
+
+async function fetchInventario() {
+
+  if (!MOCK) {
+    return fetch("/inventarioData").then(r => r.json());
+  }
+
+  return new Promise(resolve => {
+    setTimeout(() => {
+
+      resolve({
+  tipo: 0,
+  modo: "DUO",
+
+  nombres: [
+    "AGUA PURIFICADA",
+    "AGUA PURIFICADA 20L",
+    "AGUA PURIFICADA 10L",
+    "AGUA PURIFICADA 5L",
+    "AGUA PURIFICADA 1L",
+
+    "AGUA ALCALINA",
+    "AGUA ALCALINA 20L",
+    "AGUA ALCALINA 10L",
+    "AGUA ALCALINA 5L",
+    "AGUA ALCALINA 1L",
+
+    "ENJUAGUE",
+
+    "HIELO",
+    "HIELO A GRANEL",
+    "HIELO 2.5Kg",
+    "HIELO 5Kg",
+    "HIELO 10Kg"
+  ],
+
+  productos: [
+    {
+      id: 0,
+      nombre: "AGUA PURIFICADA",
+      precio: 10,
+      cantidad: 25,
+      despacho: true,
+      tiempo: 5,
+      caudal: 0,
+      bloqueado: false,
+      promocion: 0
+    },
+    {
+      id: 1,
+      nombre: "AGUA PURIFICADA 20L",
+      precio: 30,
+      cantidad: 10,
+      despacho: true,
+      tiempo: 8,
+      caudal: 0,
+      bloqueado: false,
+      promocion: 5
+    },
+    {
+      id: 2,
+      nombre: "HIELO 5Kg",
+      precio: 50,
+      cantidad: 8,
+      despacho: false,
+      tiempo: 0,
+      caudal: 120,
+      bloqueado: true,
+      promocion: 10
+    },
+    {
+      id: 3,
+      nombre: "HIELO 10Kg",
+      precio: 80,
+      cantidad: 5,
+      despacho: false,
+      tiempo: 0,
+      caudal: 150,
+      bloqueado: false,
+      promocion: 0
+    }
+  ],
+
+  ofertas: [
+    /* ================= SIN OFERTA ================= */
+    {
+      enabled: false,
+      tipo: 0,
+      precioPromo: 0,
+      diaSemana: 0,
+      fechaInicio: 0,
+      fechaFin: 0,
+      horaInicio: 0,
+      horaFin: 0
+    },
+
+    /* ================= OFERTA DIARIA ================= */
+    {
+      enabled: true,
+      tipo: 2, // DIARIA
+      precioPromo: 25,
+      diaSemana: 0,
+      fechaInicio: 0,
+      fechaFin: 0,
+      horaInicio: 800,   // 08:00
+      horaFin: 1800      // 18:00
+    },
+
+    /* ================= OFERTA SEMANAL ================= */
+    {
+      enabled: true,
+      tipo: 1, // SEMANAL
+      precioPromo: 40,
+
+      // 🔥 Lunes + Miércoles + Viernes
+      // bits: Lun(1)=5, Mie(3)=3, Vie(5)=1 → 101010
+      diaSemana: 0b0101010,
+
+      fechaInicio: 0,
+      fechaFin: 0,
+      horaInicio: 900,
+      horaFin: 1700
+    },
+
+    /* ================= OFERTA ÚNICA ================= */
+    {
+      enabled: true,
+      tipo: 0, // UNICA
+      precioPromo: 60,
+      diaSemana: 0,
+
+      fechaInicio: 321,  // 21 marzo
+      fechaFin: 331,     // 31 marzo
+
+      horaInicio: 0,
+      horaFin: 2359
+    }
+  ]
 });
 
+    }, 500);
+  });
 
-
-/* ==========================================================
-      WIZARD DE CONFIGURACION (MODAL)
-========================================================== */
-
-
-const wizardModal = document.getElementById("configWizardModal");
-const wizardProgressBar = document.getElementById("wizardProgressBar");
-const wizardStepContent = document.getElementById("wizardStepContent");
-const wizardPrevBtn = document.getElementById("wizardPrevBtn");
-const wizardNextBtn = document.getElementById("wizardNextBtn");
-
-let wizardStep = 0;
-
-let wizardData = {
-  tipoMaquina: "",
-  cantidadProductos: 0,
-  billetero: false,
-  nayax: false,
-  audio: false,
-  nfc: false
-};
-
-const wizardSteps = [
-  // PASO 1 - Tipo de máquina
- // PASO 1 - Tipo de máquina
-() => `
-  <h2>Tipo de máquina</h2>
-  <p>Selecciona una opción:</p>
-
-  <select id="tipoMaquinaSelect" class="wizard-select">
-    <option value="" disabled ${wizardData.tipoMaquina === "" ? "selected" : ""}>
-      Seleccione...
-    </option>
-    <option value="Productos de limpieza" ${wizardData.tipoMaquina === "Productos de limpieza" ? "selected":""}>Productos de limpieza</option>
-    <option value="Purificadora (solo agua)" ${wizardData.tipoMaquina === "Purificadora (solo agua)" ? "selected":""}>Purificadora (solo agua)</option>
-    <option value="Purificadora (solo hielo)" ${wizardData.tipoMaquina === "Purificadora (solo hielo)" ? "selected":""}>Purificadora (solo hielo)</option>
-    <option value="Purificadora DUO" ${wizardData.tipoMaquina === "Purificadora DUO" ? "selected":""}>Purificadora DUO</option>
-    <option value="Croquetas para mascotas" ${wizardData.tipoMaquina === "Croquetas para mascotas" ? "selected":""}>Croquetas para mascotas</option>
-    <option value="Granos y semillas" ${wizardData.tipoMaquina === "Granos y semillas" ? "selected":""}>Granos y semillas</option>
-    <option value="Shampo para autos" ${wizardData.tipoMaquina === "Shampo para autos" ? "selected":""}>Shampo para autos</option>
-    <option value="Despachador de Tags" ${wizardData.tipoMaquina === "Despachador de Tags" ? "selected":""}>Despachador de Tags</option>
-  </select>
-`,
-
- // PASO 2 - Cantidad de productos
-() => `
-  <h2>Cantidad de productos</h2>
-  <p>Seleccione el número de productos configurables:</p>
-
-  <select id="cantidadProductosSelect" class="wizard-select">
-    ${Array.from({ length: 9 }, (_, i) => i + 4)
-      .map(num => `
-        <option value="${num}" ${wizardData.cantidadProductos == num ? "selected":""}>${num}</option>
-      `).join("")}
-  </select>
-`,
-
-
-  // PASO 3 - Métodos de pago
-  // PASO 3 - Métodos de pago
-() => `
-  <h2>Métodos de pago</h2>
-
-  <div class="toggle-row">
-    <span>Billetero</span>
-    <label class="switch">
-      <input type="checkbox" id="billetero" ${wizardData.billetero ? "checked":""}>
-      <span class="slider"></span>
-    </label>
-  </div>
-
-  <div class="toggle-row">
-    <span>Nayax</span>
-    <label class="switch">
-      <input type="checkbox" id="nayax" ${wizardData.nayax ? "checked":""}>
-      <span class="slider"></span>
-    </label>
-  </div>
-
-  <div class="toggle-row">
-    <span>Monedero NFC</span>
-    <label class="switch">
-      <input type="checkbox" id="nfc" ${wizardData.nfc ? "checked":""}>
-      <span class="slider"></span>
-    </label>
-  </div>
-`,
-
-
-  // PASO 4 - Funciones extra
-  // PASO 4 - Funciones extra
-() => `
-  <h2>Funciones extra</h2>
-
-  <div class="toggle-row">
-    <span>Audio</span>
-    <label class="switch">
-      <input type="checkbox" id="audio" ${wizardData.audio ? "checked":""}>
-      <span class="slider"></span>
-    </label>
-  </div>
-`,
-
-
-  // PASO 5 - Resumen
-// PASO 5 - Resumen
-() => `
-  <h2>Resumen</h2>
-
-  <p><b>Tipo de máquina:</b> ${wizardData.tipoMaquina}</p>
-  <p><b>Cantidad productos:</b> ${wizardData.cantidadProductos}</p>
-
-  <p><b>Billetero:</b> ${wizardData.billetero ? "Sí tiene" : "No tiene"}</p>
-  <p><b>Nayax:</b> ${wizardData.nayax ? "Sí tiene" : "No tiene"}</p>
-  <p><b>NFC:</b> ${wizardData.nfc ? "Sí tiene" : "No tiene"}</p>
-  <p><b>Audio:</b> ${wizardData.audio ? "Sí tiene" : "No tiene"}</p>
-
-`,
-
-];
-
-/* -----------------------------------------
-      RENDER DEL WIZARD
------------------------------------------ */
-function renderWizard() {
-  wizardStepContent.innerHTML = wizardSteps[wizardStep]();
-
-  // Barra de progreso
-  const progress = ((wizardStep + 1) / wizardSteps.length) * 100;
-  wizardProgressBar.style.width = progress + "%";
-
-  wizardPrevBtn.style.display = wizardStep === 0 ? "none" : "inline-block";
-  wizardNextBtn.textContent =
-    wizardStep === wizardSteps.length - 1 ? "Guardar" : "Siguiente";
-
-  // PASO 1 — Listener del SELECT
-  if (wizardStep === 0) {
-    const select = document.getElementById("tipoMaquinaSelect");
-
-    select.addEventListener("change", () => {
-      wizardData.tipoMaquina = select.value;
-    });
-  }
-
-  // PASO 2, 3, 4 no requieren listeners aquí
 }
 
-/* -----------------------------------------
-      BOTÓN ANTERIOR
------------------------------------------ */
-wizardPrevBtn.onclick = () => {
-  if (wizardStep > 0) wizardStep--;
-  renderWizard();
-};
+function initCalibracion() {
 
-/* -----------------------------------------
-      BOTÓN SIGUIENTE / GUARDAR
------------------------------------------ */
-wizardNextBtn.onclick = async () => {
+  if (window.calibInit) return;
+  window.calibInit = true;
 
-  // Validación paso 1
-  if (wizardStep === 0 && !wizardData.tipoMaquina) {
-    showToast("Selecciona un tipo de máquina");
-    return;
-  }
+  const selectId = "ProductoSelect";
+  const btnCalibrar = document.getElementById("btnCalibrar");
+  const btnDetener = document.getElementById("btnDetener");
+  const modoSwitch = document.getElementById("modoCalibracion");
+  const btnPurgar = document.getElementById("btnPurgar");
 
-  // Paso 2
- if (wizardStep === 1) {
-  const select = document.getElementById("cantidadProductosSelect");
-  const val = parseInt(select.value);
+  modoSwitch.checked = false;
+  btnCalibrar.disabled = true;
+  btnDetener.disabled = true;
+  btnPurgar.disabled = true;
 
-  if (isNaN(val) || val < 4 || val > 12) {
-    showToast("Selecciona entre 4 y 12 productos");
-    return;
-  }
+  if (!btnCalibrar || !btnDetener) return;
 
-  wizardData.cantidadProductos = val;
-}
+  let productos = [];
+  let productoSeleccionado = null;
 
+  // =========================
+  // CARGAR INVENTARIO
+  // =========================
+  async function loadProductos() {
 
-  // Paso 3
-  if (wizardStep === 2) {
-    wizardData.billetero = document.getElementById("billetero").checked;
-    wizardData.nayax = document.getElementById("nayax").checked;
-    wizardData.nfc = document.getElementById("nfc").checked;
-  }
-
-  // Paso 4
-  if (wizardStep === 3) {
-    wizardData.audio = document.getElementById("audio").checked;
-  }
-
-  // Paso final → Guardar JSON
-  if (wizardStep === wizardSteps.length - 1) {
-
-
-    const resp = await fetch("/saveConfigWizard", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(wizardData)
-    });
-
-
-  if (resp.ok) {
-    showToast("Configuración guardada correctamente", "success");
-    wizardModal.classList.add("hidden");
-  } else {
-    showToast("Error al guardar configuración", "error");
-  }
-
-    return;
-  }
-
-  wizardStep++;
-  renderWizard();
-};
-
-/* -----------------------------------------
-      ABRIR WIZARD
------------------------------------------ */
-document.getElementById("openWizardBtn").onclick = () => {
-  wizardStep = 0;
-
-  wizardData = {
-    tipoMaquina: "",
-    cantidadProductos: 0,
-    billetero: false,
-    nayax: false,
-    audio: false,
-    nfc: false
-  };
-
-  wizardModal.classList.remove("hidden");
-  renderWizard();
-};
-
-function showToast(message, type = "success") {
-  const toast = document.getElementById("toast");
-  const toastMessage = document.getElementById("toastMessage");
-
-  toastMessage.textContent = message;
-
-  toast.className = "toast " + type + " show";
-
-  toast.classList.remove("hidden");
-
-  setTimeout(() => {
-    toast.classList.remove("show");
-    setTimeout(() => toast.classList.add("hidden"), 250);
-  }, 3000);
-}
-
-document.getElementById("wizardCloseBtn").onclick = () => {
-  wizardModal.classList.add("hidden");
-};
-
-/* -----------------------------------------
-      CARGAR PRODUCTOS PARA CALIBRACIÓN
------------------------------------------ */
-
-const calibContainer = document.getElementById("calibracionContainer");
-let productosData = []; // para reutilizar en el modal
-async function cargarProductosCalibracion() {
-  const calibContainer = document.getElementById("calibracionContainer");
-  loader.classList.remove("hidden");
-  calibContainer.innerHTML = ""; // limpiar contenido
-
-  try {
-    // 2️⃣ Solicitar inventario al ESP32
-    const resp = await fetch("/inventario");
-    const data = await resp.json();
-
-    productosData = data.productos;
-
-    // 3️⃣ Crear las cards de calibración
-    data.productos.forEach(prod => {
-      const card = document.createElement("div");
-      card.className = "product-card";  // reutiliza diseño de inventario
-      card.dataset.id = prod.id;
-
-      card.innerHTML = `
-        <h3>${prod.nombre}</h3>
-        <p><b>Tiempo calibrado:</b> ${prod.tiempo} s</p>
-        <p><b>Estado:</b> ${prod.bloqueado ? "✖ Inactivo" : "✔ Activo"}</p>
-        <button class="edit-btn" data-id="${prod.id}">Calibrar</button>
-      `;
-
-      // Evento abrir modal
-      card.querySelector(".edit-btn").onclick = () => openCalibrationModal(prod);
-
-      calibContainer.appendChild(card);
-    });
-
-  } catch (err) {
-    console.error("Error cargando calibración:", err);
-    showToast("Error al cargar calibración", "error");
-  }
-
-  setTimeout(() => loader.classList.add("hidden"), 150);
-}
-
-
-/* Ejecutar carga SOLO cuando entran a la pestaña Calibración */
-document
-  .querySelector(`[data-tab="calibracion"]`)
-  .addEventListener("click", async () => {
-
-    // 1️⃣ Avisar al ESP32 que queremos entrar a modo calibración
     try {
-      await fetch("/calibration/start");
-      console.log("Modo calibración iniciado en ESP32");
+      const data = await fetchInventario();
+
+      productos = data.productos || [];
+
+      // map para select
+      const options = productos.map(p => ({
+        label: p.nombre,
+        value: p.id
+      }));
+
+      // usar tu helper global
+      initCustomSelect(options, options[0]?.value, selectId);
+
+      productoSeleccionado = options[0]?.value;
+
+      // escuchar cambios
+      const container = document.getElementById(selectId);
+
+      container.addEventListener("click", () => {
+        productoSeleccionado = container.dataset.value;
+      });
+
     } catch (e) {
-      console.warn("No se pudo iniciar calibración:", e);
+      console.error("Error cargando productos", e);
+      showToast("Error al cargar productos ⚠️", "error");
     }
 
-    // 2️⃣ Cargar los productos como siempre
-    cargarProductosCalibracion();
+  }
+
+  // =========================
+  // CALIBRAR
+  // =========================
+  btnCalibrar.addEventListener("click", async () => {
+
+    if (productoSeleccionado === null) {
+      showToast("Selecciona un producto ⚠️", "error");
+      return;
+    }
+
+    if (!modoSwitch.checked) {
+      showToast("Activa modo calibración primero ⚠️", "error");
+      return;
+    }
+
+    try {
+
+      showLoader();
+
+      if (MOCK) {
+        console.log("Simulación calibrar", productoSeleccionado);
+        showToast("Calibrando (simulación) 🔧", "info");
+        return;
+      }
+
+      await fetch("/calibracion/startProduct", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: productoSeleccionado
+        })
+      });
+
+      showToast("Calibración iniciada 🔧", "success");
+
+    } catch (e) {
+      showToast("Error al calibrar ⚠️", "error");
+    } finally {
+      hideLoader();
+    }
+
   });
 
+  // =========================
+  // DETENER
+  // =========================
+  btnDetener.addEventListener("click", async () => {
 
+    try {
 
-// ==========================================================
-// CALIBRACION DE PRODUCTOS
-// ==========================================================
-let currentProductId = null;
+      showLoader();
 
+      if (MOCK) {
+        console.log("Simulación detener");
+        showToast("Calibración detenida ⏹", "info");
+        return;
+      }
 
-function openCalibrationModal(prod) {
-  currentProductId = prod.id;
+      await fetch("/calibracion/stop", {
+        method: "POST"
+      });
 
-  document.getElementById("calibTitle").textContent =
-    "Calibración de: " + prod.nombre;
+      showToast("Calibración detenida ⏹", "success");
 
-  document.getElementById("calibWave").classList.add("hidden");
+    } catch (e) {
+      showToast("Error al detener ⚠️", "error");
+    } finally {
+      hideLoader();
+    }
 
-  document.getElementById("calibModal").classList.remove("hidden");
-}
+  });
 
+  // PURGAR
 
-/* -------- EVENTOS -------- */
+  btnPurgar.addEventListener("click", async () => {
 
-document.getElementById("calibCloseBtn").onclick = () => {
-  stopCalibration();
-  cargarProductosCalibracion();
-  document.getElementById("calibModal").classList.add("hidden");
-};
+  if (!modoSwitch.checked) {
+    showToast("Activa modo calibración primero ⚠️", "error");
+    return;
+  }
 
-document.getElementById("btnPurgar").onclick = async () => {
-  document.getElementById("calibWave").classList.remove("hidden");
-
-  await fetch("/calibration/purgar?id=" + currentProductId);
-};
-
-document.getElementById("btnIniciar").onclick = async () => {
-  document.getElementById("calibWave").classList.remove("hidden");
-  // Indicar que producto inicia calibración
-  await fetch("/calibration/startProduct?id=" + currentProductId);
-
-};
-
-document.getElementById("btnDetener").onclick = () => stopCalibration();
-
-
-function stopCalibration() {
-  fetch("/calibration/stop");
-
-  document.getElementById("calibWave").classList.add("hidden");
-}
-
-
-/* ==========================================================
-      FIN CALIBRACION DE PRODUCTOS
-========================================================== */
-
-
-const nfcModal = document.getElementById("nfcModal");
-const nfcStatusText = document.getElementById("nfcStatusText");
-
-async function cargarTagsNFC() {
-  const container = document.getElementById("nfcContainer");
-  loader.classList.remove("hidden");
-  container.innerHTML = "";
+  if (productoSeleccionado === null) {
+    showToast("Selecciona un producto ⚠️", "error");
+    return;
+  }
 
   try {
-    
 
-    const resp = await fetch("/nfc/tags.csv");
-    const csv = await resp.text();
+    showLoader();
 
-    const lines = csv.trim().split("\n");
+    if (MOCK) {
+      console.log("Simulación purgar", productoSeleccionado);
+      showToast("Purgando (simulación) 💨", "info");
+      return;
+    }
 
-    lines.forEach(uid => {
-      if (!uid) return;
+    await fetch("/calibracion/purgar", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        id: productoSeleccionado
+      })
+    });
 
-      const card = document.createElement("div");
-      card.className = "nfc-card";
+    showToast("Purgado iniciado 💨", "success");
 
-      card.innerHTML = `
-        <h3>UID NFC</h3>
-        <p>${uid}</p>
-        <button class="nfc-delete-btn" data-uid="${uid}">Eliminar</button>
-      `;
+  } catch (e) {
+    console.error(e);
+    showToast("Error al purgar ⚠️", "error");
+  } finally {
+    hideLoader();
+  }
 
-      card.querySelector(".nfc-delete-btn").onclick = () =>
-        eliminarTagNFC(uid);
+});
 
-      container.appendChild(card);
+  // =========================
+  // MODO CALIBRACIÓN
+  // =========================
+  modoSwitch.addEventListener("change", async () => {
+
+    const estado = modoSwitch.checked;
+      // 🔥 habilitar / deshabilitar botones
+    btnCalibrar.disabled = !estado;
+    btnDetener.disabled = !estado;
+    btnPurgar.disabled = !estado;
+
+    try {
+
+      showLoader();
+
+      if (MOCK) {
+        console.log("Modo calibración:", estado);
+        showToast(
+          estado ? "Modo calibración activado 🔧" : "Modo calibración desactivado ⏹",
+          "info"
+        );
+        return;
+      }
+
+      const endpoint = estado
+        ? "/calibracion/on"
+        : "/calibracion/off";
+
+      const res = await fetch(endpoint);
+
+      if (!res.ok) throw new Error("Error en calibración");
+
+      showToast(
+        estado ? "Modo calibración activado 🔧" : "Modo calibración desactivado ⏹",
+        "success"
+      );
+
+    } catch (e) {
+      console.error(e);
+      showToast("Error al cambiar modo ⚠️", "error");
+      // 🔥 rollback UI si falla
+      modoSwitch.checked = !estado;
+      btnCalibrar.disabled = estado;
+      btnDetener.disabled = estado;
+    } finally {
+      hideLoader();
+    }
+
+  });
+
+  // =========================
+  // INIT
+  // =========================
+  loadProductos();
+}
+
+function initConfiguracion() {
+
+  if (window.configInit) return;
+  window.configInit = true;
+
+  // =========================
+  // ELEMENTOS
+  // =========================
+  const select = document.getElementById("TipoUI");
+  const trigger = select.querySelector(".custom-select-trigger span");
+  const options = select.querySelectorAll(".custom-option");
+
+  const saveBtn = document.getElementById("saveConfigBtn");
+
+  const btnMinus = document.getElementById("btnMinus");
+  const btnPlus = document.getElementById("btnPlus");
+  const productosValue = document.getElementById("ProductosValue");
+
+  if (!select || !btnMinus || !btnPlus) return;
+
+  let selectedTipo = "limpieza";
+  let productos = 1;
+
+  // =========================
+  // UI STEP
+  // =========================
+  function updateUI() {
+    productosValue.textContent = productos;
+  }
+
+  function getMaxProductos() {
+    const tipo = getTipo();
+    return (tipo === "duo" || tipo === "agua" || tipo === "hielo") ? 8 : 12;
+  }
+
+  function updateProductosLimit() {
+    const max = getMaxProductos();
+
+    if (productos > max) {
+      productos = max;
+      updateUI();
+    }
+
+    btnMinus.disabled = productos <= 1;
+    btnPlus.disabled = productos >= max;
+  }
+
+  // =========================
+  // STEPPER
+  // =========================
+  btnPlus.addEventListener("click", () => {
+    if (productos < getMaxProductos()) {
+      productos++;
+      updateUI();
+      updateProductosLimit();
+    }
+  });
+
+  btnMinus.addEventListener("click", () => {
+    if (productos > 1) {
+      productos--;
+      updateUI();
+      updateProductosLimit();
+    }
+  });
+
+  // =========================
+  // CUSTOM SELECT
+  // =========================
+  select.addEventListener("click", () => {
+    select.classList.toggle("open");
+  });
+
+  options.forEach(option => {
+    option.addEventListener("click", (e) => {
+
+      e.stopPropagation();
+
+      options.forEach(o => o.classList.remove("selected"));
+      option.classList.add("selected");
+
+      selectedTipo = option.dataset.value;
+      trigger.textContent = option.textContent;
+
+      select.classList.remove("open");
+
+      updateProductosLimit();
+    });
+  });
+
+  document.addEventListener("click", (e) => {
+    if (!select.contains(e.target)) {
+      select.classList.remove("open");
+    }
+  });
+
+  function setTipo(value) {
+    const option = select.querySelector(`[data-value="${value}"]`);
+    if (option) option.click();
+  }
+
+  function getTipo() {
+    return selectedTipo;
+  }
+
+  // =========================
+  // MAPEO
+  // =========================
+  function mapTipoToConfig(tipo) {
+    switch (tipo) {
+      case "limpieza": return { TipoDeVending: 0, SensorTemp: 0, SensorPres: 0 };
+      case "croquetas": return { TipoDeVending: 1, SensorTemp: 0, SensorPres: 0 };
+      case "duo": return { TipoDeVending: 2, SensorTemp: 1, SensorPres: 1 };
+      case "agua": return { TipoDeVending: 2, SensorTemp: 0, SensorPres: 1 };
+      case "hielo": return { TipoDeVending: 2, SensorTemp: 1, SensorPres: 0 };
+      case "granos": return { TipoDeVending: 3, SensorTemp: 0, SensorPres: 0 };
+      case "carro": return { TipoDeVending: 4, SensorTemp: 0, SensorPres: 0 };
+      default: return { TipoDeVending: 0, SensorTemp: 0, SensorPres: 0 };
+    }
+  }
+
+  function mapConfigToUI(config) {
+    if (config.TipoDeVending === 2) {
+      if (config.SensorTemp && config.SensorPres) return "duo";
+      if (!config.SensorTemp && config.SensorPres) return "agua";
+      if (config.SensorTemp && !config.SensorPres) return "hielo";
+    }
+    if (config.TipoDeVending === 0) return "limpieza";
+    if (config.TipoDeVending === 1) return "croquetas";
+    if (config.TipoDeVending === 3) return "granos";
+    if (config.TipoDeVending === 4) return "carro";
+
+    return "limpieza";
+  }
+
+  // =========================
+  // LOAD CONFIG
+  // =========================
+async function loadConfig() {
+
+  let config;
+
+  if (!MOCK) {
+    try {
+      const res = await fetch("/configData");
+      config = await res.json();
+    } catch (e) {
+      console.error("Error al obtener config");
+      return;
+    }
+  } else {
+    console.warn("Modo simulación 🔥");
+
+    config = {
+      DineroEnCaja: 0.0,
+      AudioActivo: true,
+      Volumen: 70,
+      SSID: "",
+      PASS: "",
+      Nombre: "mivending",
+      UserWebLocal: "admin",
+      PassWebLocal: "1234",
+      Version: "1.0.0",
+      Balance: 0,
+      CambioMaximo: 0,
+      ProductosSize: 4,
+      ChatID: "",
+      Token: "",
+      GroupID: "",
+      BilleteroType: 1,
+      MonederoType: 1,
+      NFC532: true,
+      TipoDeVending: 2,
+      SensorTemp: 1,
+      SensorPres: 1,
+      Incremento: 1,
+      Divisa: 0,
+      NayaxState: 0,
+      LectorQR: false,
+      IluminacionLED: false,
+      NumeroLED: 0,
+      BrilloLED: 70
+    };
+  }
+
+  // 🔥 AQUÍ ya existe config
+
+  setTipo(mapConfigToUI(config));
+
+  productos = (config.ProductosSize ?? 2);
+  updateUI();
+  updateProductosLimit();
+
+  document.getElementById("MonederoType").checked = config.MonederoType > 0;
+  document.getElementById("BilleteroType").checked = config.BilleteroType > 0;
+  document.getElementById("NayaxState").checked = config.NayaxState > 0;
+
+  document.getElementById("AudioActivo").checked = config.AudioActivo;
+  document.getElementById("Volumen").value = config.Volumen;
+
+  document.getElementById("NFC532").checked = config.NFC532;
+
+  updateVolumenUI();
+  toggleAudio();
+}
+  // =========================
+  // GET CONFIG
+  // =========================
+  function getConfigFromUI() {
+
+    const tipoMap = mapTipoToConfig(getTipo());
+
+    return {
+      ...tipoMap,
+
+      ProductosSize: productos,
+
+      MonederoType: document.getElementById("MonederoType").checked ? 1 : 0,
+      BilleteroType: document.getElementById("BilleteroType").checked ? 1 : 0,
+      NayaxState: document.getElementById("NayaxState").checked ? 1 : 0,
+
+      AudioActivo: document.getElementById("AudioActivo").checked,
+      Volumen: Number(document.getElementById("Volumen").value),
+
+      NFC532: document.getElementById("NFC532").checked
+    };
+  }
+
+  // =========================
+  // SAVE
+  // =========================
+ saveBtn.addEventListener("click", async () => {
+
+  const config = getConfigFromUI();
+
+
+
+  try {
+
+    showLoader();
+
+    // =========================
+    // 🧪 MODO SIMULACIÓN
+    // =========================
+    if (MOCK) {
+
+      console.warn("Modo en simulación 🔥");
+      console.log("CONFIG FINAL 🚀", config);
+      showToast("Configuración guardada (simulación) ✅", "success");
+      return;
+    }
+
+    // =========================
+    // 🔌 MODO REAL (ESP32)
+    // =========================
+    const res = await fetch("/saveconfigdata", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(config)
+    });
+
+    if (!res.ok) {
+      throw new Error("Error en servidor");
+    }
+
+    showToast("Configuración guardada ✅", "success");
+
+  } catch (e) {
+
+    console.error(e);
+    showToast("Error al guardar ⚠️", "error");
+
+  } finally {
+
+    hideLoader();
+
+  }
+
+});
+
+  const audioSwitch = document.getElementById("AudioActivo");
+  const volumenSlider = document.getElementById("Volumen");
+  const volumenValue = document.getElementById("VolumenValue");
+
+  // mostrar valor
+  function updateVolumenUI() {
+    volumenValue.textContent = volumenSlider.value + "%";
+  }
+
+  // activar / desactivar slider
+  function toggleAudio() {
+    const enabled = audioSwitch.checked;
+
+    volumenSlider.disabled = !enabled;
+    volumenValue.style.opacity = enabled ? "1" : "0.4";
+  }
+
+  // eventos
+  volumenSlider.addEventListener("input", updateVolumenUI);
+  audioSwitch.addEventListener("change", toggleAudio);
+
+  // =========================
+  // INIT
+  // =========================
+  loadConfig();
+}
+
+
+
+// =============================
+// Tab NFC
+// =============================
+
+let currentNFCStatus = {
+  active: false,
+  uid: null
+};
+
+
+async function editTagName(index) {
+
+  const newName = prompt("Nuevo nombre:");
+
+  if (!newName) return;
+
+  // 🔥 obtener archivo actual
+  const res = await fetch("/TagsValidos.csv");
+  const text = await res.text();
+
+  const rows = text.trim().split("\n");
+
+  const data = rows.map(row => row.split(","));
+
+  // 🔥 modificar nombre (columna 1)
+  data[index][1] = newName;
+
+  // 🔥 reconstruir CSV
+  const newCSV = data.map(r => r.join(",")).join("\n");
+  showLoader();
+  try {
+
+    await fetch("/saveTags", {
+      method: "POST",
+      headers: {
+        "Content-Type": "text/plain"
+      },
+      body: newCSV
+    });
+
+    showToast("Guardado correctamente ✅", "success");
+
+    loadNFC();
+
+  } catch (e) {
+    console.error(e);
+    showToast("Error al guardar ❌", "error");
+  }finally {
+    hideLoader();
+  }
+}
+
+// =============================
+// LOAD DATA
+// =============================
+async function loadNFC() {
+  try {
+
+    let ventasText, tagsText, status;
+
+    // =========================
+    // 🧪 MODO MOCK
+    // =========================
+    if (MOCK) {
+
+      console.warn("NFC en modo simulación 🔥");
+
+      const [ventasRes, tagsRes, statusRes] = await Promise.all([
+        fetch("/.../mock/tags_mock.csv"),
+        fetch("/.../mock/ventas_mock.csv"),
+        fetch("/.../mock/nfcStatus_mock.json")
+      ]);
+
+      ventasText = await ventasRes.text();
+      tagsText = await tagsRes.text();
+      status = await statusRes.json();
+
+    } else {
+
+      // =========================
+      // 🔌 MODO REAL
+      // =========================
+      const [ventasRes, tagsRes, statusRes] = await Promise.all([
+        fetch("/ventas.csv"),
+        fetch("/TagsValidos.csv"),
+        fetch("/nfcStatus")
+      ]);
+
+      ventasText = await ventasRes.text();
+      tagsText = await tagsRes.text();
+      status = await statusRes.json();
+    }
+
+    const ventas = parseCSV(ventasText, true);
+    const tags = parseCSV(tagsText, false);
+
+    currentNFCStatus = status;
+
+    renderNFCCards(tags, ventas);
+
+  } catch (err) {
+    console.error("Error NFC:", err);
+  }
+}
+
+
+// function parseCSV(text, hasHeader = true) {
+//   const rows = text.trim().split("\n");
+
+//   // 🔥 SIN HEADER (tu caso)
+//   if (!hasHeader) {
+//     return rows.map(row => {
+//       const values = row.split(",");
+
+//       return {
+//         UID: values[0]?.trim(),
+//         Nombre: values[1]?.trim(),
+//         Saldo: values[2]?.trim(),
+//         Puntos: values[3]?.trim()
+//       };
+//     });
+//   }
+
+//   const headers = rows[0].split(",");
+
+//   return rows.slice(1).map(row => {
+//     const values = row.split(",");
+//     let obj = {};
+
+//     headers.forEach((h, i) => {
+//       obj[h.trim()] = values[i]?.trim();
+//     });
+
+//     return obj;
+//   });
+// }
+function parseCSV(text, hasHeader = true) {
+  const rows = text
+    .trim()
+    .split("\n")
+    .filter(row => row.trim() !== ""); // 🔥 clave
+
+  // 🔥 SI NO HAY FILAS → retornar vacío
+  if (rows.length === 0) return [];
+
+  if (!hasHeader) {
+    return rows.map(row => {
+      const values = row.split(",");
+
+      return {
+        UID: values[0]?.trim(),
+        Nombre: values[1]?.trim(),
+        Saldo: values[2]?.trim(),
+        Puntos: values[3]?.trim()
+      };
+    });
+  }
+
+  const headers = rows[0].split(",");
+
+  return rows.slice(1).map(row => {
+    const values = row.split(",");
+    let obj = {};
+
+    headers.forEach((h, i) => {
+      obj[h.trim()] = values[i]?.trim();
+    });
+
+    return obj;
+  });
+}
+
+// =============================
+// User Stats
+// =============================
+function getUserStats(uid, ventas) {
+  const userVentas = ventas.filter(v => v.Cliente === uid);
+
+  let total = 0;
+  let compras = userVentas.length;
+
+  const productos = {};
+
+  userVentas.forEach(v => {
+    const venta = parseFloat(v["Venta($)"] || 0);
+    total += venta;
+
+    const prod = v.Producto || "Otro";
+
+    if (!productos[prod]) productos[prod] = 0;
+    productos[prod]++;
+  });
+
+  let topProducto = "-";
+  let max = 0;
+
+  for (const p in productos) {
+    if (productos[p] > max) {
+      max = productos[p];
+      topProducto = p;
+    }
+  }
+
+  return {
+    total,
+    compras,
+    topProducto
+  };
+}
+
+// =============================
+// RENDER CARDS
+// =============================
+// function renderNFCCards(tags, ventas) {
+//   const container = document.getElementById("nfcContainer");
+//   container.innerHTML = "";
+
+//   tags.forEach(tag => {
+
+//     const stats = getUserStats(tag.UID, ventas);
+
+//     // 🔥 estado dinámico
+//     let estado = "Inactivo";
+//     if (currentNFCStatus.active && currentNFCStatus.uid === tag.UID) {
+//       estado = "Activo";
+//     }
+
+//     const card = document.createElement("div");
+//     card.className = "inv-card";
+//     card.dataset.uid = tag.UID;
+
+//     card.innerHTML = `
+//       <div class="card-header">
+//         <h3>${tag.Nombre || "Sin nombre"}</h3>
+//         <span class="status ${estado.toLowerCase()}">${estado}</span>
+//       </div>
+
+//       <div class="card-body">
+
+//         <div class="nfc-grid">
+//           <div>
+//             <p><strong>Saldo</strong></p>
+//             <p>$${tag.Saldo || 0}</p>
+
+//             <p><strong>Puntos</strong></p>
+//             <p>$${tag.Puntos || 0}</p>
+
+//             <p><strong>Compras</strong></p>
+//             <p>${stats.compras}</p>
+//           </div>
+
+//           <div>
+//             <p><strong>Consumo</strong></p>
+//             <p>$${stats.total.toFixed(2)}</p>
+
+//             <p><strong>Top Producto</strong></p>
+//             <p>${stats.topProducto}</p>
+//           </div>
+//         </div>
+
+//         <div class="nfc-footer">
+//           UID: ${tag.UID || "-"}
+//         </div>
+
+//       </div>
+//     `;
+
+//     container.appendChild(card);
+//   });
+// }
+function renderNFCCards(tags, ventas) {
+  const container = document.getElementById("nfcContainer");
+  container.innerHTML = "";
+
+  if (!tags || tags.length === 0) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <p>📭 No hay tarjetas registradas</p>
+      </div>
+    `;
+    return;
+  }
+
+  tags.forEach((tag, index) => {
+
+    const stats = getUserStats(tag.UID, ventas);
+
+    let estado = "Inactivo";
+    if (currentNFCStatus.active && currentNFCStatus.uid === tag.UID) {
+      estado = "Activo";
+    }
+
+    const card = document.createElement("div");
+    card.className = "inv-card";
+    card.dataset.uid = tag.UID;
+    card.dataset.index = index;
+
+    card.innerHTML = `
+      <div class="card-header">
+        <h3 class="nfc-name">${tag.Nombre || "Sin nombre"}</h3>
+        <span class="status ${estado.toLowerCase()}">${estado}</span>
+      </div>
+
+      <div class="card-body">
+
+        <div class="nfc-grid">
+          <div>
+            <p><strong>Saldo</strong></p>
+            <p>$${tag.Saldo || 0}</p>
+
+            <p><strong>Puntos</strong></p>
+            <p>${tag.Puntos || 0}</p>
+
+            <p><strong>Compras</strong></p>
+            <p>${stats.compras}</p>
+          </div>
+
+          <div>
+            <p><strong>Consumo</strong></p>
+            <p>$${stats.total.toFixed(2)}</p>
+
+            <p><strong>Top Producto</strong></p>
+            <p>${stats.topProducto}</p>
+          </div>
+        </div>
+
+        <div class="nfc-footer">
+          <span>UID: ${tag.UID || "-"}</span>
+          <button class="edit-btn">✏️</button>
+        </div>
+
+      </div>
+    `;
+
+    // 🔥 EVENTO EDITAR
+    const btn = card.querySelector(".edit-btn");
+
+    btn.addEventListener("click", () => {
+      editTagName(index);
+    });
+
+    container.appendChild(card);
+  });
+}
+// =============================
+// LIVE STATUS UPDATE 🔥
+// =============================
+async function updateNFCStatus() {
+  try {
+    const res = await fetch("/nfcStatus");
+    const status = await res.json();
+
+    currentNFCStatus = status;
+
+    const cards = document.querySelectorAll(".inv-card");
+
+    cards.forEach(card => {
+      const uid = card.dataset.uid;
+
+      let estado = "Inactivo";
+
+      if (status.active && status.uid === uid) {
+        estado = "Activo";
+      }
+
+      const badge = card.querySelector(".status");
+
+      if (badge) {
+        badge.textContent = estado;
+        badge.className = "status " + estado.toLowerCase();
+      }
     });
 
   } catch (err) {
-    console.error("Error cargando tags NFC", err);
-    showToast("Error cargando tags NFC", "error");
+    console.error("Error actualizando estado NFC:", err);
   }
- setTimeout(() => loader.classList.add("hidden"), 150);
 }
 
-async function eliminarTagNFC(uid) {
-  loader.classList.remove("hidden");
-
-  const resp = await fetch("/nfc/delete", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ uid })
-  });
-
-  
-
-  if (resp.ok) {
-    showToast("Tag eliminado", "success");
-    cargarTagsNFC();
-  } else {
-    showToast("Error al eliminar tag", "error");
-  }
-  
- setTimeout(() => loader.classList.add("hidden"), 150);
-}
-
-
-document.getElementById("addNfcBtn").onclick = async () => {
-
-  nfcStatusText.textContent = "Acerque una tarjeta NFC al lector...";
-  nfcModal.classList.remove("hidden");
-
-  await fetch("/nfc/add"); // Inicia el modo de lectura
-};
-
-document.getElementById("nfcCloseBtn").onclick = async () => {
-  nfcModal.classList.add("hidden");
-  await fetch("/nfc/stop");
-};
-
-
-document.querySelector('[data-tab="nfc"]').addEventListener("click", () => {
-  cargarTagsNFC();
-});
-
-// Mantener loader visible hasta que la página termine de cargar
-window.addEventListener("load", () => {
-  const loader = document.getElementById("loader");
-  if (loader) loader.classList.add("hidden");
-});
+// =============================
+// LOOP TIEMPO REAL
+// =============================
+setInterval(updateNFCStatus, 2000);

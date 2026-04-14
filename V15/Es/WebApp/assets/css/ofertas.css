@@ -1,0 +1,147 @@
+/* CONTENEDOR MODAL */
+.oferta-modal {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+/* GRID GENERAL */
+.oferta-grid {
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+
+/* CAMPOS */
+.oferta-grid .field {
+  width: 100%;
+}
+
+/* INPUTS BONITOS (tipo botón como tu diseño) */
+.oferta-grid input,
+.oferta-grid select {
+  width: 100%;
+  padding: 12px;
+  border-radius: 14px;
+
+  border: none;
+  outline: none;
+
+  background: rgba(255,255,255,0.05);
+  color: var(--text);
+
+  font-size: 0.95rem;
+  text-align: center;
+
+  transition: all 0.2s ease;
+}
+
+/* FOCUS */
+.oferta-grid input:focus,
+.oferta-grid select:focus {
+  box-shadow: 
+    0 0 0 2px rgba(59,130,246,0.25),
+    0 4px 12px rgba(0,0,0,0.3);
+}
+
+/* FILAS COMPLETAS */
+.full {
+  grid-column: 1 / -1;
+}
+
+/* BOTONES */
+.oferta-actions {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 10px;
+}
+
+/* GRUPO IZQUIERDA */
+.oferta-actions-left {
+  display: flex;
+  gap: 12px;
+}
+
+/* SWITCH DERECHA */
+.oferta-actions-right {
+  display: flex;
+  align-items: center;
+}
+
+.oferta-actions .btn {
+  width: 100%;
+}
+
+.custom-select.open .custom-select-trigger {
+  box-shadow: 0 0 0 2px rgba(59,130,246,0.25);
+}
+
+.oferta-actions-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* TEXTO */
+.oferta-estado {
+  font-size: 0.9rem;
+  color: var(--muted);
+  min-width: 80px;
+  text-align: right;
+}
+
+/* ACTIVO */
+.oferta-estado.activo {
+  color: #22c55e; /* verde suave */
+  font-weight: 500;
+}
+
+/* INACTIVO */
+.oferta-estado.inactivo {
+  color: var(--muted);
+  opacity: 0.6;
+}
+/* CONTENEDOR DIAS */
+.dias-semana {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin-top: 8px;
+}
+
+/* BOTONES */
+.dia-btn {
+  padding: 10px;
+  border-radius: 12px;
+
+  text-align: center;
+  font-size: 0.9rem;
+
+  background: rgba(255,255,255,0.05);
+  color: var(--text);
+
+  cursor: pointer;
+
+  transition: all 0.2s ease;
+}
+
+/* HOVER */
+.dia-btn:hover {
+  background: rgba(255,255,255,0.08);
+}
+
+/* ACTIVO */
+.dia-btn.active {
+  background: linear-gradient(135deg, #ff7a18, #3b82f6);
+  color: white;
+  font-weight: 500;
+}
+.oferta-grid label {
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+

@@ -1,364 +1,758 @@
-/* ============================================================
-   VENTAS.JS — Sistema completo de ventas + filtros + SSE
-   ============================================================ */
+// ================= MOCK CSV =================
+// function getMockCSV() {
+// return `Producto,Cantidad(L),Venta($),Fecha,Hora,Pago
+// hielo,5kg,10,2026-03-24,10:00,nayax
+// hielo,10kg,20,2026-03-23,11:00,efectivo
+// hielo,2.5kg,5,2026-03-23,13:00,efectivo
+// hielo,3_kg,6,2026-03-22,09:00,nayax
+// hielo,7_kg,14,2026-03-21,15:00,efectivo`;
+// }
 
-let ventas = [];            // Todas las ventas del CSV
-let graficaProductos = null;
+// function getMockCSV() {
+// return `Producto,Cantidad(L),Venta($),Fecha,Hora,Pago
+// agua,garrafon,20,2026-03-24,08:00,efectivo
+// aguaalcalina,botella,12,2026-03-24,09:00,telegram
+// hielo,5kg,10,2026-03-24,10:00,nayax
+// agua,1/2garrafon,10,2026-03-23,08:00,efectivo
+// hielo,3_kg,6,2026-03-23,10:00,nayax`;
+// }
 
-/* ============ Al cargar la página ============ */
+function getMockCSV() {
+return `Producto,Cantidad(L),Venta($),Fecha,Hora,Pago
+suavizante,1.5,15,2026-03-24,08:00,efectivo
+jabon,2,20,2026-03-24,10:00,nayax
+cloro,1,10,2026-03-23,09:00,efectivo
+desinfectante,3,30,2026-03-23,12:00,tarjeta
+suavizante,2.5,25,2026-03-22,11:00,efectivo`;
+}
 
-window.addEventListener("DOMContentLoaded", () => {
+// function getMockCSV() {
+// return `Producto,Cantidad(L),Venta($),Fecha,Hora,Pago
+// agua,garrafon,20,2026-03-24,08:00,efectivo
+// aguaalcalina,botella,12,2026-03-24,09:00,telegram
+// agua,1/2garrafon,10,2026-03-23,08:00,efectivo
+// aguaalcalina,garrafon,25,2026-03-23,09:00,telegram
+// agua,botella,5,2026-03-22,08:00,efectivo`;
+// }
+// Para colores globales
+function getCSSVar(name) {
+  return getComputedStyle(document.body).getPropertyValue(name).trim();
+}
 
-    const loader = document.getElementById("loader");
-    // setTimeout(() => {
-    //     loader.classList.add("hidden");
-    // }, 300);
+let modoHoras = "hoy";
+let cacheData = [];
 
-    /* ========= Loader al cambiar de página desde el menú ========= */
-    document.querySelectorAll(".sidebar-nav a").forEach(link => {
-    link.addEventListener("click", e => {
-        const loader = document.getElementById("loader");
-        const url = link.getAttribute("href");
+// ================= PARSER =================
+function parseCSV(text) {
+  const lines = text.trim().split("\n");
+  const headers = lines[0].split(",").map(h => h.trim());
 
-        if (!url || url === "#") return;
+  return lines.slice(1).map(line => {
+    const values = line.split(",").map(v => v.trim());
+    let obj = {};
+    headers.forEach((h, i) => obj[h] = values[i]);
+    return obj;
+  });
+}
 
-        e.preventDefault();             // detener navegación inmediata
-        if (isMobile()) {
-            sidebar.classList.remove("show");
-            overlay.classList.remove("show");
-        }
-        loader.classList.remove("hidden"); // mostrar loader
+// ================= FETCH =================
+async function fetchVentas() {
+  if (MOCK) return parseCSV(getMockCSV());
 
-        setTimeout(() => {
-        window.location.href = url;   // navegar después del efecto
-        }, 200);
-    });
-    });
+  try {
+    const res = await fetch("/ventas.csv");
+    const text = await res.text();
+    return parseCSV(text);
+  } catch (err) {
+    console.error("Error cargando ventas:", err);
+    return [];
+  }
+}
 
-  
+// ================= PROCESAR =================
+function procesar(data) {
 
+  let balance = 0;
+  let total = data.length;
+  let ventasHoy = 0;
 
-    const logout = document.getElementById("logout");
-    const sidebar = document.getElementById("sidebar");
-    const menuBtn = document.getElementById("menuBtn");
-    const overlay = document.getElementById("overlay");
-    const statusDot = document.getElementById("status");
+  // 🔥 métricas separadas
+  let agua = 0;
+  let alcalina = 0;
+  let hielo = 0;
+  let kilos = 0;   // croquetas / granos
+  let litros = 0;  // limpieza / automotriz
 
+  const porProducto = {};
+  const porHora = Array(24).fill(0);
+  const porPago = {};
 
-    /* ================== Manejo del menú ================== */
-    function isMobile() {
-        return window.innerWidth <= 750;
-    }
+  const fechas = data.map(v => v["Fecha"]).filter(Boolean);
+  const hoy = fechas.sort().slice(-1)[0];
 
-    menuBtn.addEventListener("click", () => {
-        if (isMobile()) {
-            sidebar.classList.toggle("show");
-            overlay.classList.toggle("show");
-        } else {
-            sidebar.classList.toggle("collapsed");
-        }
-    });
+  const hoyDate = new Date(hoy + "T00:00:00");
 
-    overlay.addEventListener("click", () => {
-        sidebar.classList.remove("show");
-        overlay.classList.remove("show");
-    });
+  const ayerDate = new Date(hoyDate);
+  ayerDate.setDate(ayerDate.getDate() - 1);
 
-    /* ================== Logout ================== */
-    logout.addEventListener("click", () => {
-        localStorage.removeItem("token");
-        window.location.href = "../index.html";
-    });
+  const ayer = `${ayerDate.getFullYear()}-${String(ayerDate.getMonth()+1).padStart(2,"0")}-${String(ayerDate.getDate()).padStart(2,"0")}`;
 
-    /* ================== Protección por sesión ================== */
-    const token = localStorage.getItem("token");
-    if (!token) {
-        window.location.href = "../index.html";
-        return;
-    }
+  // 🔥 parser avanzado de cantidades
+  // function parseCantidad(valor) {
 
-    /* ================== Cargar CSV inicial ================== */
-    cargarCSV();
+  //   if (!valor) return 0;
 
-    /* ================== Tabs ================== */
-    activarTabsVentas();
+  //   // ===== AGUA =====
+  //   if (valor === "Garrafon") return 1;
+  //   if (valor === "1/2Garrafon") return 0.5;
+  //   if (valor === "Botella") return 0.05;
 
-    /* ================== SSE — Nuevas ventas ================== */
-    const evtSource = new EventSource("/events");
+  //   if (valor.includes("_Garrafones")) {
+  //     return parseFloat(valor.split("_")[0]) || 0;
+  //   }
 
-    evtSource.addEventListener("nuevaVenta", (e) => {
-        agregarVentaNueva(e.data);
-    });
+  //   // ===== HIELO / KILOS =====
+  //   if (valor.includes("kg")) return parseFloat(valor);
 
-    /* Botón actualizar manual */
-    document.getElementById("btnActualizar").addEventListener("click", cargarCSV);
+  //   if (valor.includes("_Kg")) {
+  //     return parseFloat(valor.split("_")[0]) || 0;
+  //   }
 
-    loader.classList.add("hidden");
+  //   return 0;
+  // }
 
-    /* ================= VERIFICACIÓN DE CONEXIÓN CADA 3s ================= */
-  async function verificarConexion() {
-    if (!statusDot) return;
+// function parseCantidad(valor) {
 
-    try {
-      await fetch("/ping");
-      statusDot.classList.replace("offline", "online");
-    } catch {
-      statusDot.classList.replace("online", "offline");
-    }
+//   if (!valor) return 0;
+
+//   valor = valor.toLowerCase().trim();
+
+//   // ===== AGUA =====
+//   if (valor === "garrafon") return 1;
+//   if (valor === "1/2garrafon") return 0.5;
+//   if (valor === "botella") return 0.05;
+
+//   if (valor.includes("_garrafones")) {
+//     return parseFloat(valor.split("_")[0]) || 0;
+//   }
+
+//   // ===== HIELO / KILOS =====
+//   if (valor.includes("kg")) {
+//     return parseFloat(valor) || parseFloat(valor.split("_")[0]) || 0;
+//   }
+
+//   // ===== LÍQUIDOS =====
+//   if (!isNaN(valor)) {
+//     return parseFloat(valor);
+//   }
+
+//   return 0;
+// }
+
+function parseCantidad(valor, tipoMaquina) {
+
+  if (!valor) return 0;
+
+  valor = valor.toLowerCase().trim();
+
+  // ===== AGUA =====
+  if (valor === "garrafon") return 1;
+  if (valor === "1/2garrafon") return 0.5;
+  if (valor === "botella") return 0.05;
+
+  if (valor.includes("_garrafones")) {
+    return parseFloat(valor.split("_")[0]) || 0;
   }
 
-  setInterval(verificarConexion, 3000);
-  verificarConexion();
+  // ===== HIELO =====
+  if (valor.includes("kg")) {
+    return parseFloat(valor) || parseFloat(valor.split("_")[0]) || 0;
+  }
+
+  // ===== NÚMEROS PUROS =====
+  if (!isNaN(valor)) {
+
+    const num = parseFloat(valor);
+
+    // 🔥 aquí está la clave
+    // tipo 1 = croquetas
+    // tipo 3 = granos
+    if (tipoMaquina === 1 || tipoMaquina === 3) {
+      return num; // 👉 kilos
+    }
+
+    // tipo 0 = limpieza
+    // tipo 4 = automotriz
+    if (tipoMaquina === 0 || tipoMaquina === 4) {
+      return num; // 👉 litros
+    }
+
+    // fallback
+    return num;
+  }
+
+  return 0;
+}
+
+const tipo = window.tipoMaquina;
+data.forEach(v => {
+
+  const venta = parseFloat(v["Venta($)"]) || 0;
+  const producto = (v["Producto"] || "").toLowerCase();
+  const fecha = v["Fecha"];
+  const hora = parseInt(v["Hora"]?.split(":")[0]);
+  const pago = v["Pago"] || "Otro";
+  const cantidadRaw = v["Cantidad(L)"] || "";
+
+  const cantidad = parseCantidad(cantidadRaw, tipo);
+
+  balance += venta;
+
+  if (fecha === hoy) ventasHoy++;
+
+  // ===== filtro por horas =====
+  let incluir = false;
+
+  if (modoHoras === "todo") incluir = true;
+  if (modoHoras === "hoy" && fecha === hoy) incluir = true;
+  if (modoHoras === "ayer" && fecha === ayer) incluir = true;
+
+  if (modoHoras === "semana") {
+    const fechaObj = new Date(fecha + "T00:00:00");
+    const diff = (hoyDate - fechaObj) / (1000 * 60 * 60 * 24);
+    if (diff >= 0 && diff < 7) incluir = true;
+  }
+
+  if (incluir && !isNaN(hora)) {
+    porHora[hora] += venta;
+  }
+
+  porProducto[v["Producto"]] = (porProducto[v["Producto"]] || 0) + venta;
+  porPago[pago] = (porPago[pago] || 0) + venta;
+
+  // ============================
+  // 🔥 CLASIFICACIÓN CORRECTA
+  // ============================
+
+  if (tipo === 2) {
+    // 🟢 PURIFICADORA (DUO / AGUA / HIELO)
+
+    if (producto === "agua") {
+      agua += cantidad;
+    }
+    else if (producto === "aguaalcalina") {
+      alcalina += cantidad;
+    }
+    else if (producto.includes("hielo")) {
+      hielo += cantidad;
+    }
+
+  } else if (tipo === 1 || tipo === 3) {
+    // 🐶 🌾 CROQUETAS / GRANOS
+    kilos += cantidad;
+
+  } else if (tipo === 0 || tipo === 4) {
+    // 🧼 🚗 LIMPIEZA / AUTOMOTRIZ
+    litros += cantidad;
+
+  }
 
 });
 
+  const top = Object.entries(porProducto)
+    .sort((a,b) => b[1] - a[1])
+    .slice(0,3);
 
-/* ============================================================
-   Cargar y procesar el CSV
-   ============================================================ */
+  let metodoTop = "-";
+  let maxPago = 0;
 
-async function cargarCSV() {
-    try {
-        const res = await fetch("/ventas.csv");
-        const texto = await res.text();
-
-        ventas = parseCSV(texto);
-
-        llenarTabla();
-        llenarFiltros();
-        actualizarProductos();
+  for (let p in porPago) {
+    if (porPago[p] > maxPago) {
+      maxPago = porPago[p];
+      metodoTop = p;
     }
-    catch (err) {
-        console.error("Error cargando CSV:", err);
-    }
+  }
+
+  const promedio = total ? balance / total : 0;
+
+  return {
+    balance,
+    promedio,
+    ventasHoy,
+    top,
+    porHora,
+    metodoTop,
+    agua,
+    alcalina,
+    hielo,
+    kilos,
+    litros
+  };
 }
 
+// ================= UI =================
+function renderUI(r) {
 
-/* ============= Convertir CSV a array de objetos ============= */
+  document.getElementById("balanceHeader").textContent = `💰 $${r.balance.toFixed(2)}`;
+  document.getElementById("ventasHoyHeader").textContent = `📅 ${r.ventasHoy} ventas hoy`;
+  document.getElementById("promedio").textContent = `$${r.promedio.toFixed(2)}`;
+  document.getElementById("metodoPago").textContent = r.metodoTop;
 
-function parseCSV(texto) {
+  // Card de top de productos 
+  const ul = document.getElementById("topProductos");
+  ul.innerHTML = "";
+  const medallas = ["🥇", "🥈", "🥉"];
+  r.top.forEach((p, i) => {
+    const nombre = p[0].replaceAll("_", " ");
+    const emoji = medallas[i] || "🏅";
 
-    let lineas = texto.split("\n").map(l => l.trim()).filter(l => l.length > 0);
-    // ❗ Omitir SIEMPRE la primera fila (encabezados)
-    if (lineas.length > 0) lineas = lineas.slice(1);
+    ul.innerHTML += `
+      <li class="top-item">
+        <div class="left">${emoji} ${nombre}</div>
+        <div class="right">$${p[1]}</div>
+      </li>
+    `;
+  });
 
-    const lista = [];
+  // Card de ventas realizadas, garrafones, litros o kilos 
+  const card = document.getElementById("litros");
+  const titulo = document.getElementById("cardCantidadTitulo");
 
-    for (let linea of lineas) {
-        const campos = linea.split(",");
+  const tipo = window.tipoMaquina;
+  const modo = window.modoMaquina;
 
-        if (campos.length < 7) continue;
+  // 🔥 limpiar contenido
+  card.innerHTML = "";
 
-        lista.push({
-            id: campos[0],
-            producto: campos[1],
-            cantidad: campos[2],
-            venta: parseFloat(campos[3]),
-            fecha: campos[4].replace("'", ""), // quitar comilla si existe
-            hora: campos[5],
-            pago: campos[6]
-        });
+  if (tipo === 2 && modo === "DUO") {
+
+    titulo.textContent = "💧🧊 Garrafones y Kg";
+
+    let html = "";
+
+    if (r.agua > 0) {
+      html += `<div>💧 ${r.agua.toFixed(2)} Purificada</div>`;
     }
 
-    return lista;
-}
-
-
-/* ============================================================
-   TABLA DE VENTAS
-   ============================================================ */
-
-function llenarTabla() {
-    const cuerpo = document.querySelector("#tablaVentas tbody");
-    cuerpo.innerHTML = "";
-
-    const filtroTxt = document.getElementById("buscar").value.toLowerCase();
-    const filtroProd = document.getElementById("filtroProducto").value;
-    const filtroPago = document.getElementById("filtroPago").value;
-
-    const filtradas = ventas.filter(v => {
-
-        if (filtroTxt && !(
-            v.producto.toLowerCase().includes(filtroTxt) ||
-            v.pago.toLowerCase().includes(filtroTxt) ||
-            v.fecha.toLowerCase().includes(filtroTxt)
-        )) return false;
-
-        if (filtroProd && v.producto !== filtroProd) return false;
-        if (filtroPago && v.pago !== filtroPago) return false;
-
-        return true;
-    });
-
-    for (let v of filtradas) {
-        const tr = document.createElement("tr");
-
-        tr.innerHTML = `
-            <td>${v.id}</td>
-            <td>${v.producto}</td>
-            <td>${v.cantidad}</td>
-            <td>$${v.venta.toFixed(2)}</td>
-            <td>${v.fecha}</td>
-            <td>${v.hora}</td>
-            <td>${v.pago}</td>
-        `;
-
-        cuerpo.appendChild(tr);
-    }
-}
-
-
-/* ============================================================
-   FILTROS
-   ============================================================ */
-
-function llenarFiltros() {
-    const filtroProd = document.getElementById("filtroProducto");
-
-    const productos = [...new Set(ventas.map(v => v.producto))];
-
-    filtroProd.innerHTML = `<option value="">Producto (todos)</option>`;
-
-    for (let p of productos) {
-        filtroProd.innerHTML += `<option>${p}</option>`;
+    if (r.alcalina > 0) {
+      html += `<div>💧 ${r.alcalina.toFixed(2)} Alcalina</div>`;
     }
 
-    // recargar tabla cuando cambien los filtros
-    document.getElementById("buscar").oninput = llenarTabla;
-    document.getElementById("filtroProducto").onchange = llenarTabla;
-    document.getElementById("filtroPago").onchange = llenarTabla;
-}
+    if (r.hielo > 0) {
+      html += `<div>🧊 ${r.hielo.toFixed(2)} kg</div>`;
+    }
 
+    card.innerHTML = html || `<div>Sin ventas</div>`;
+  }
 
-/* ============================================================
-   SSE — Nueva venta
-   ============================================================ */
+  else if (tipo === 2 && modo === "AGUA") {
 
-function agregarVentaNueva(linea) {
-    if (!linea || linea.length < 5) return;
+    titulo.textContent = "💧 Garrafones de agua vendida";
 
-    const campos = linea.split(",");
+    card.innerHTML = `
+      <div>💧 ${r.agua.toFixed(2)} Purificada</div>
+      ${r.alcalina > 0 ? `<div>💧 ${r.alcalina.toFixed(2)} Alcalina</div>` : ""}
+    `;
+  }
+  else if (tipo === 2 && modo === "HIELO") {
 
-    if (campos.length < 7) return;
+    titulo.textContent = "🧊 Kilos vendidos";
+    // card.textContent = `${r.kilos} kg`;
+    card.textContent = `${r.hielo.toFixed(2)} kg`;
 
-    const ventaNueva = {
-        id: campos[0],
-        producto: campos[1],
-        cantidad: campos[2],
-        venta: parseFloat(campos[3]),
-        fecha: campos[4].replace("'", ""),
-        hora: campos[5],
-        pago: campos[6]
+  }
+  else {
+
+    const map = {
+      0: { text: "🧼 Litros vendidos", value: `${r.litros} L` },
+      1: { text: "🐶 Kilos vendidos", value: `${r.kilos} kg` },
+      3: { text: "🌾 Kilos vendidos", value: `${r.kilos} kg` },
+      4: { text: "🚗 Litros vendidos", value: `${r.litros} L` }
     };
 
-    // agregar al array principal
-    ventas.push(ventaNueva);
+    const conf = map[tipo] || { text: "📦 Cantidad", value: "-" };
 
-    // refrescar tabla y productos
-    llenarTabla();
-    actualizarProductos();
+    titulo.textContent = conf.text;
+    card.textContent = conf.value;
+  }
 
-    // animación ligera
-    const cont = document.querySelector(".table-container");
-    cont.style.boxShadow = "0 0 20px rgba(255,122,26,0.5)";
-    setTimeout(() => cont.style.boxShadow = "none", 600);
+
+
+}
+// Parsear cantidades 
+function parseCantidadAvanzada(producto, cantidadRaw) {
+
+  if (!cantidadRaw) return 0;
+
+  // ===== AGUA =====
+  if (cantidadRaw === "Garrafon") return 1;
+  if (cantidadRaw === "1/2Garrafon") return 0.5;
+  if (cantidadRaw === "Botella") return 0.05;
+
+  // Ej: "0.5_Garrafones", "1_Garrafones"
+  if (cantidadRaw.includes("_Garrafones")) {
+    return parseFloat(cantidadRaw.split("_")[0]) || 0;
+  }
+
+  // ===== HIELO =====
+  if (cantidadRaw.includes("kg")) {
+    return parseFloat(cantidadRaw);
+  }
+
+  // Ej: "3_Kg"
+  if (cantidadRaw.includes("_Kg")) {
+    return parseFloat(cantidadRaw.split("_")[0]) || 0;
+  }
+
+  return 0;
+}
+
+// ================= CHART =================
+let chartHoras;
+function renderHoras(data) {
+
+  if (chartHoras) chartHoras.destroy();
+
+  const ctx = document.getElementById("chartHoras").getContext("2d");
+
+  chartHoras = new Chart(ctx, {
+    type: "bar",
+    data: {
+      labels: data.map((_,i)=>`${i}:00`),
+      datasets: [{
+        data,
+        backgroundColor: "#4f7cff"
+      }]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      plugins: { legend: { display:false } }
+    }
+  });
+}
+
+// ================= INIT =================
+document.addEventListener("DOMContentLoaded", async () => {
+
+  showLoader();
+  const logout = document.getElementById("logout");
+  validarSesion();
+  cargarTipoMaquina();
+
+  cacheData = await fetchVentas();
+  const r = procesar(cacheData);
+  renderUI(r);
+  renderHoras(r.porHora);
+
+
+  const hist = agruparPorDia(cacheData);
+  renderHistorico(
+    hist.labels,
+    hist.dinero,     // 🔥 antes era valores
+    hist.variacion,
+    hist.ventas
+  );
+  // console.log(hist);
+
+  document.querySelectorAll(".toggle-btn").forEach(btn => {
+
+    btn.addEventListener("click", () => {
+
+      document.querySelectorAll(".toggle-btn")
+        .forEach(b => b.classList.remove("active"));
+
+      btn.classList.add("active");
+
+      modoHoras = btn.dataset.mode;
+      // console.log("modo:", modoHoras);
+
+      const r = procesar(cacheData);
+      renderHoras(r.porHora);
+
+    });
+
+  });
+
+  initSSE(); 
+
+  hideLoader();
+
+});
+
+ /* -----------------------------------------
+      CERRAR SESIÓN
+  ----------------------------------------- */
+  logout.addEventListener("click", () => {
+    localStorage.removeItem("token");
+    window.location.href = "../index.html";
+  });
+
+async function recargarVentasUI() {
+  cacheData = await fetchVentas();
+
+  const r = procesar(cacheData);
+  renderUI(r);
+  renderHoras(r.porHora);
+
+  const hist = agruparPorDia(cacheData);
+  renderHistorico(hist.labels, hist.dinero, hist.variacion, hist.ventas);
+}
+
+// function initSSE() {
+//   try {
+//     const evtSource = new EventSource("/events");
+
+//     evtSource.addEventListener("nuevaVenta", (e) => {
+//       agregarVentaNueva(e.data);
+//     });
+
+//   } catch (err) {
+//     console.warn("SSE no disponible");
+//   }
+// }
+function initSSE() {
+  try {
+    const evtSource = new EventSource("/events");
+
+    evtSource.addEventListener("nuevaVenta", async () => {
+
+      console.log("Nueva venta detectada 🔥");
+
+      await recargarVentasUI();
+
+      // 🔥 animación ligera
+      const cont = document.querySelector(".ventas-top");
+      if (cont) {
+        cont.style.boxShadow = "0 0 20px rgba(255,122,26,0.5)";
+        setTimeout(() => cont.style.boxShadow = "none", 600);
+      }
+
+    });
+
+  } catch (err) {
+    console.warn("SSE no disponible");
+  }
+}
+
+// ================= TIPO MAQUINA =================
+async function cargarTipoMaquina() {
+
+  let tipo, modo;
+
+  // 🔥 SIMULACIÓN
+  if (MOCK) {
+    tipo = 0;        // 2 = purificadora
+    modo = "DUO";    // "DUO" | "AGUA" | "HIELO"
+  } else {
+    showLoader();
+    try {
+      const res = await fetch("/inventarioData");
+      const json = await res.json();
+
+      tipo = json.tipo;
+      modo = json.modo;
+
+    } catch (err) {
+      console.log("Error tipo máquina:", err);
+
+      // fallback seguro
+      tipo = 2;
+      modo = "AGUA";
+    }finally {
+      hideLoader(); // 🔥 no ocultar aquí
+    }
+  }
+
+  // 🔥 GUARDAR GLOBAL (IMPORTANTE)
+  window.tipoMaquina = tipo;
+  window.modoMaquina = modo;
+
+  const label = document.getElementById("tipoMaquinaLabel");
+
+  let texto = "";
+
+  if (tipo === 2) {
+    if (modo === "DUO") texto = "💧🧊 Purificadora DUO";
+    else if (modo === "AGUA") texto = "💧 Agua purificada";
+    else if (modo === "HIELO") texto = "🧊 Hielo purificado";
+    else texto = "💧 Purificadora";
+  } else {
+    const tipos = {
+      0: "🧼 Productos de limpieza",
+      1: "🐶 Croquetas",
+      3: "🌾 Granos",
+      4: "🚗 Automotriz"
+    };
+    texto = tipos[tipo] || "⚙️ Desconocido";
+  }
+
+  if (label) {
+    label.textContent = `Máquina: ${texto}`;
+  }
 }
 
 
-/* ============================================================
-   TAB — Ventas por producto
-   ============================================================ */
 
-function actualizarProductos() {
+//  Grafica del historico 
+function agruparPorDia(data) {
 
+  const dineroPorFecha = {};
+  const ventasPorFecha = {};
 
-    const caja = document.getElementById("cardsProductos");
-    caja.innerHTML = "";
+  data.forEach(v => {
+    const fecha = v["Fecha"];
+    const venta = parseFloat(v["Venta($)"]) || 0;
 
-    const resumen = {};
+    if (!fecha) return;
 
-    for (let v of ventas) {
-        if (!resumen[v.producto]) {
-            resumen[v.producto] = { ventas: 0, cantidad: 0 };
+    dineroPorFecha[fecha] = (dineroPorFecha[fecha] || 0) + venta;
+    ventasPorFecha[fecha] = (ventasPorFecha[fecha] || 0) + 1;
+  });
+
+  const fechasOrdenadas = Object.keys(dineroPorFecha).sort();
+
+  const labels = fechasOrdenadas.map(f => {
+    const d = new Date(f);
+    return d.toLocaleDateString("es-MX", {
+      day: "2-digit",
+      month: "2-digit"
+    });
+  });
+
+  const dinero = fechasOrdenadas.map(f => dineroPorFecha[f]);
+  const ventas = fechasOrdenadas.map(f => ventasPorFecha[f]);
+
+  const variacion = dinero.map((v, i) => {
+    if (i === 0) return 0;
+    const prev = dinero[i - 1];
+    if (prev === 0) return 0;
+    return ((v - prev) / prev) * 100;
+  });
+
+  return { labels, dinero, ventas, variacion };
+}
+const pluginLabels = {
+  id: "customLabels",
+  afterDatasetsDraw(chart) {
+
+    const { ctx } = chart;
+    const variacion = chart.config._variacion || [];
+    const dinero = chart.config._dinero || [];
+
+    ctx.save();
+    ctx.font = "bold 10px sans-serif";
+    ctx.textAlign = "center";
+
+    const meta = chart.getDatasetMeta(0);
+
+    meta.data.forEach((point, i) => {
+
+      const valorDinero = dinero[i] || 0;
+      const varPct = variacion[i] || 0;
+
+      const signo = varPct >= 0 ? "+" : "";
+      const color = varPct >= 0 ? "#22c55e" : "#ef4444";
+
+      // 💰 dinero
+      ctx.fillStyle = "#fff";
+      ctx.fillText(`$${valorDinero}`, point.x, point.y - 18);
+
+      // 📊 %
+      ctx.fillStyle = color;
+      ctx.fillText(`(${signo}${varPct.toFixed(0)}%)`, point.x, point.y - 5);
+
+    });
+
+    ctx.restore();
+  }
+};
+let chartHistorico;
+function renderHistorico(labels, dinero, variacion, ventas) {
+
+  if (chartHistorico) chartHistorico.destroy();
+
+  const canvas = document.getElementById("chartHistorico");
+  const ctx = canvas.getContext("2d");
+
+  const gradient = ctx.createLinearGradient(0, 0, 0, 200);
+  gradient.addColorStop(0, "rgba(255, 122, 26, 0.45)");
+  gradient.addColorStop(1, "rgba(255, 122, 26, 0)");
+
+  const maxVentas = Math.max(...ventas);
+
+  chartHistorico = new Chart(ctx, {
+    type: "line",
+    data: {
+      labels,
+      datasets: [
+
+        {
+          // 🔥 LA POSICIÓN ES POR VENTAS
+          data: ventas,
+          borderColor: "#ff7a1a",
+          backgroundColor: gradient,
+          fill: true,
+          tension: 0.35,
+          borderWidth: 2,
+          pointRadius: 3,
+          pointBackgroundColor: "#ff7a1a"
         }
-        resumen[v.producto].ventas += v.venta;
-        resumen[v.producto].cantidad += parseFloat(v.cantidad);
-    }
-
-    for (let producto in resumen) {
-        const card = document.createElement("div");
-        card.className = "card-prod";
-
-        card.innerHTML = `
-          <h3>${producto}</h3>
-          <p class="num">$${resumen[producto].ventas.toFixed(2)}</p>
-          <!--<small>${resumen[producto].cantidad} vendidos</small>-->
-        `;
-
-
-        caja.appendChild(card);
-    }
-
-    actualizarGraficaProductos(resumen);
-}
-
-
-/* ============================================================
-   Gráfica por producto (Chart.js)
-   ============================================================ */
-
-function actualizarGraficaProductos(resumen) {
-
-    const labels = Object.keys(resumen);
-    const data = labels.map(p => resumen[p].ventas);
-
-    const ctx = document.getElementById("graficaProductos").getContext("2d");
-
-    if (graficaProductos) graficaProductos.destroy();
-
-    graficaProductos = new Chart(ctx, {
-        type: "bar",
-        data: {
-            labels,
-            datasets: [{
-                label: "Ventas por producto ($)",
-                data,
-                backgroundColor: "#ff7a1a"
-            }]
-        },
-        options: {
-            responsive: true,
-            plugins: {
-                legend: { display: false }
-            },
-            scales: {
-                y: {
-                    ticks: { color: "#fff" }
-                },
-                x: {
-                    ticks: { color: "#fff" }
-                }
+      ]
+    },
+    plugins: [pluginLabels],
+    options: {
+      interaction: {
+        mode: "index",
+        intersect: false
+      },
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: "#0f172a",
+          borderColor: "#ff7a1a",
+          borderWidth: 1,
+          titleColor: "#fff",
+          bodyColor: "#fff",
+          displayColors: false,
+          padding: 10,
+          callbacks: {
+            label: function(context) {
+              const dinero = context.chart.config._dinero;
+              return ` $${dinero[context.dataIndex]}`;
             }
+          }
         }
-    });
-}
+      },
+      scales: {
+        x: {
+          ticks: { color: getCSSVar('--text'), 
+            autoSkip: false,       
+            padding: 8,
+            maxRotation: 0,         
+            minRotation: 0 },
+          grid: { color: getCSSVar('--muted') + "33" }
+        },
+        y: {
+          beginAtZero: true,
+          min: 0,
+          max: maxVentas + 2,
+          ticks: { color: getCSSVar('--text'), padding: 8 },
+          grid: { color: getCSSVar('--muted') + "33" },
+          title: {
+            display: true,
+            text: "Cantidad de ventas",
+            color: "#94a3b8"
+          }
+        }
 
+      }
+    }
+  });
 
-/* ============================================================
-   Tabs
-   ============================================================ */
-
-function activarTabsVentas() {
-    const tabs = document.querySelectorAll(".tab");
-    const contenidos = document.querySelectorAll(".tab-content");
-
-    tabs.forEach(tab => {
-        tab.addEventListener("click", () => {
-            tabs.forEach(t => t.classList.remove("active"));
-            contenidos.forEach(c => c.classList.remove("active"));
-
-            tab.classList.add("active");
-            document.getElementById("tab-" + tab.dataset.tab).classList.add("active");
-        });
-    });
+  // 🔥 PASAR DATOS AL PLUGIN
+  chartHistorico.config._variacion = variacion;
+  chartHistorico.config._dinero = dinero;
 }

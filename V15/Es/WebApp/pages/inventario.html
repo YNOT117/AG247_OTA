@@ -4,45 +4,69 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Inventario</title>
+
+  <!-- GLOBAL -->
+  <link rel="stylesheet" href="../assets/css/global.css">
+
+  <!-- SOLO INVENTARIO -->
   <link rel="stylesheet" href="../assets/css/inventario.css">
+  <link rel="stylesheet" href="../assets/css/ofertas.css">
+
+
+  <script src="../assets/js/global.js" defer></script>
   <script src="../assets/js/inventario.js" defer></script>
+  <script src="../assets/js/ofertas.js" defer></script>
 </head>
 
 <body>
 
-  <!-- Sidebar -->
-  <aside id="sidebar" class="sidebar">
-    <div class="sidebar-header">
-      <img src="../Logo.png" class="sidebar-logo" alt="Agranel">
-      <h2 class="sidebar-title">Panel</h2>
+<div class="layout">
+
+  <!-- SIDEBAR GLOBAL -->
+  <aside class="sidebar">
+    <div class="logo">
+      <img src="/Logo.png">
+      <h2>Panel</h2>
     </div>
 
-    <nav class="sidebar-nav">
-      <a href="dashboard.html">📊 Dashboard</a>
-      <a href="ventas.html">💰 Ventas</a>
-      <a href="inventario.html" class="active">📦 Inventario</a>
-      <a href="configuracion.html">⚙️ Configuración</a>
-      <a href="monitoreo.html">📡 Monitoreo</a>
-      <a id="logout">🚪 Cerrar sesión</a>
+    <nav class="menu">
+      <a href="dashboard.html" class="item">📊 Dashboard</a>
+      <a href="ventas.html" class="item">💰 Ventas</a>
+      <a href="inventario.html" class="item active">📦 Inventario</a>
+      <a href="configuracion.html" class="item">⚙️ Configuración</a>
+      <a href="monitoreo.html" class="item">📡 Monitoreo</a>
+      <a id="logout" class="item">🚪 Cerrar sesión</a>
     </nav>
+
+    <!-- SWITCH GLOBAL -->
+    <div class="theme-toggle">
+      <span>🌙 Modo claro</span>
+      <label class="switch">
+        <input type="checkbox" id="themeSwitch">
+        <span class="slider"></span>
+      </label>
+    </div>
   </aside>
 
   <div id="overlay" class="overlay"></div>
 
-  <!-- Main -->
-  <div class="main">
+  <!-- MAIN -->
+  <main class="main">
 
     <header class="topbar">
       <button id="menuBtn" class="menu-btn">☰</button>
-      <h1 class="topbar-title">Inventario</h1>
+      <h1>Inventario</h1>
       <span id="status" class="status-dot offline"></span>
     </header>
 
     <section class="content">
 
+    <div class="inv-header">
       <h2 class="section-title">Productos disponibles</h2>
-
-      <!-- TABLA (PC) -->
+      <p id="tipoMaquinaLabel" class="machine-type"></p>
+    </div>
+      
+      <!-- TABLA -->
       <table class="inv-table">
         <thead>
           <tr>
@@ -51,65 +75,152 @@
             <th>Cantidad</th>
             <th>Tiempo</th>
             <th>Cashback</th>
-            <th>Bloqueado</th>
+            <th>Estado</th>
             <th></th>
           </tr>
         </thead>
         <tbody id="invTableBody"></tbody>
       </table>
 
-      <!-- CARDS (MÓVIL) -->
+      <!-- CARDS MOBILE -->
       <div id="cardsMobile" class="cards-mobile"></div>
 
     </section>
-  </div>
 
-  <!-- Modal -->
-  <div id="modal-bg" class="modal-bg">
-    <div class="modal">
+  </main>
+</div>
 
-      <h2>Editar producto</h2>
+<!-- MODAL -->
+<div id="modal-bg" class="modal-bg">
+  <div class="modal modal-puri">
 
-      <!-- Nombre -->
-      <label for="prodNombreSelect">Nombre</label>
-      <select id="prodNombreSelect" class="hidden"></select>
-      <input id="prodNombreInput" type="text" class="hidden">
+    <h2>Editar producto</h2>
 
-      <!-- Precio -->
-      <label for="prodPrecio">Precio</label>
-      <input id="prodPrecio" type="number" min="0">
+    <!-- NOMBRE -->
+    <label>Nombre</label>
+    <!-- NOMBRE PURIFICADORA -->
+    <div class="custom-select" id="customNombre">
+      <div class="custom-select-trigger">
+        <span class="custom-text">Seleccionar</span>
+        <span class="arrow">▾</span>
+      </div>
+      <div class="custom-options"></div>
+    </div>
+    <!-- NOMBRE RESTO -->
+    <input id="prodNombreInput" type="text" class="hidden">
 
-      <!-- Cantidad -->
-      <label for="prodCantidad">Cantidad</label>
-      <input id="prodCantidad" type="number" min="0">
-
-      <!-- Tiempo -->
-      <label for="prodTiempo">Tiempo (Seg)</label>
-      <input id="prodTiempo" type="number" min="0">
-
-      <!-- Cashback -->
-      <label for="prodCashback">Cashback (%)</label>
-      <input id="prodCashback" type="number" min="0" max="100">
-
-      <!-- Bloqueado -->
-      <div class="chk-row">
-        <input type="checkbox" id="prodBloqueo">
-        <span>Bloqueado</span>
+    <!-- DESPACHO + VALOR -->
+    <div class="row">
+      <div class="field">
+        <label>Despacho por</label>
+        <div class="custom-select" id="customDespacho">
+          <div class="custom-select-trigger">
+            <span class="custom-text"></span>
+            <span class="arrow">▾</span>
+          </div>
+          <div class="custom-options"></div>
+        </div>
       </div>
 
-      <!-- Botones -->
-      <div class="form-actions">
-        <button id="btnCancelar" class="btn-cancelar">Cancelar</button>
-        <button id="btnGuardar" class="btn-guardar">Guardar</button>
+      <div class="field">
+        <label id="labelValor">Tiempo (seg)</label>
+        <input id="prodValor" type="number" min="0">
+      </div>
+    </div>
+
+    <!-- PRECIO + CASHBACK -->
+    <div class="row">
+      <div class="field">
+        <label>💰Precio</label>
+        <input id="prodPrecio" type="number" min="0">
+      </div>
+
+      <div class="field">
+        <label>🎁Cashback (%)</label>
+        <input id="prodCashback" type="number" min="0" max="100">
+      </div>
+    </div>
+
+    <!-- CANTIDAD (solo no purificadora) -->
+    <div id="cantidadRow" class="row hidden">
+      <div class="field">
+        <label id="labelCantidad">Cantidad</label>
+        <input id="prodCantidad" type="number" min="0">
+      </div>
+    </div>
+
+    <!-- BOTONES -->
+    <div class="form-actions">
+      <button id="btnCancelar" class="btn">❌Cancelar</button>
+      <button id="btnGuardar" class="btn btn-primary">💾Guardar</button>
+    </div>
+
+  </div>
+</div>
+
+<!-- ===== MODAL OFERTA ===== -->
+<div id="oferta-modal-bg" class="modal-bg">
+  <div class="modal modal-puri">
+
+    <div class="oferta-modal">
+
+      <h2>Configurar oferta</h2>
+
+      <div class="oferta-grid">
+
+        <!-- TIPO -->
+        <div class="field">
+          <div class="custom-select" id="customOfertaTipo">
+            <div class="custom-select-trigger">
+              <span class="custom-text">Seleccionar</span>
+              <span class="arrow">▾</span>
+            </div>
+            <div class="custom-options"></div>
+          </div>
+        </div>
+
+        <!-- PRECIO -->
+        <div class="field">
+          <input type="number" id="precioPromo" placeholder="Precio">
+        </div>
+
+        <!-- DINÁMICO -->
+        <div id="ofertaDinamica" class="full"></div>
+
+      </div>
+
+      <!-- BOTONES -->
+      <div class="oferta-actions">
+
+        <div class="oferta-actions-left">
+          <button id="btnCancelarOferta" class="btn">Cancelar</button>
+          <button id="btnGuardarOferta" class="btn btn-primary">Guardar</button>
+        </div>
+
+        <div class="oferta-actions-right">
+          <span id="ofertaEstado" class="oferta-estado">
+            Desactivada
+          </span>
+          <label class="switch">
+            <input type="checkbox" id="ofertaEnabled">
+            <span class="slider"></span>
+          </label>
+
+        </div>
+
       </div>
 
     </div>
-  </div>
 
-  <!-- Loader -->
-  <div id="loader" class="loader-overlay">
-    <div class="loader"></div>
   </div>
+</div>
+
+<!-- LOADER GLOBAL -->
+<div id="loader" class="loader-overlay hidden">
+  <div class="loader"></div>
+</div>
+
+<div id="toast" class="toast"></div>
 
 </body>
 </html>

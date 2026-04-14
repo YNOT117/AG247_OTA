@@ -1,121 +1,164 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Panel – Ventas</title>
 
-  <link rel="stylesheet" href="../assets/css/dashboard.css" />
-  <link rel="stylesheet" href="../assets/css/ventas.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <!-- GLOBAL -->
+  <link rel="stylesheet" href="../assets/css/global.css">
+
+  <!-- SOLO estilos propios -->
+  <link rel="stylesheet" href="../assets/css/ventas.css">
+
+  <!-- JS -->
+  <script src="../assets/js/global.js" defer></script>
   <script src="../assets/js/ventas.js" defer></script>
 </head>
 
 <body>
 
-  <!-- Sidebar -->
-  <aside id="sidebar" class="sidebar">
-    <div class="sidebar-header">
-      <img src="../Logo.png" class="sidebar-logo" alt="Agranel" />
-      <h2 class="sidebar-title">Panel</h2>
-    </div>
+  <div class="layout">
 
-    <nav class="sidebar-nav">
-      <a href="dashboard.html">📊 Dashboard</a>
-      <a href="ventas.html" class="active">💰 Ventas</a>
-      <a href="inventario.html">📦 Inventario</a>
-      <a href="configuracion.html">⚙️ Configuración</a>
-      <a href="monitoreo.html">📡 Monitoreo</a>
-      <a id="logout">🚪 Cerrar sesión</a>
-    </nav>
-  </aside>
-
-  <!-- Overlay móvil -->
-  <div id="overlay" class="overlay"></div>
-
-  <!-- Contenido principal -->
-  <div class="main">
-
-    <!-- Topbar -->
-       <header class="topbar">
-      <button id="menuBtn" class="menu-btn">☰</button>
-      <h1 class="topbar-title">Ventas</h1>
-      <span id="status" class="status-dot offline"></span>
-    </header>
-
-    <!-- Contenido -->
-    <section class="content">
-
-      <!-- Tabs -->
-      <div class="tabs">
-        <button class="tab active" data-tab="lista">📄 Lista de ventas</button>
-        <button class="tab" data-tab="productos">📦 Por producto</button>
+    <!-- SIDEBAR GLOBAL -->
+    <aside class="sidebar">
+      <div class="logo">
+        <img src="/Logo.png" alt="Agranel">
+        <h2>Panel</h2>
       </div>
 
-      <!-- ==== TAB 1: LISTA === -->
-      <div id="tab-lista" class="tab-content active">
+      <nav class="menu">
+        <a href="dashboard.html" class="item">📊 Dashboard</a>
+        <a href="ventas.html" class="item">💰 Ventas</a>
+        <a href="inventario.html" class="item">📦 Inventario</a>
+        <a href="configuracion.html" class="item">⚙️ Configuración</a>
+        <a href="monitoreo.html" class="item">📡 Monitoreo</a>
+        <a id="logout" class="item">🚪 Cerrar sesión</a>
 
-        <!-- Filtros -->
-        <div class="filters">
-          <input type="text" id="buscar" placeholder="🔍 Buscar...">
-
-          <select id="filtroProducto">
-            <option value="">Producto (todos)</option>
-          </select>
-
-          <select id="filtroPago">
-            <option value="">Pago (todos)</option>
-            <option>Efectivo</option>
-            <option>Saldo NFC</option>
-            <option>Puntos NFC</option>
-            <option>Telegram</option>
-          </select>
-
-          <button id="btnActualizar">Actualizar</button>
+        <div class="theme-toggle">
+          <span>🌙 Modo claro</span>
+          <label class="switch">
+            <input type="checkbox" id="themeSwitch">
+            <span class="slider"></span>
+          </label>
         </div>
+      </nav>
+    </aside>
 
-        <!-- Tabla -->
-        <div class="table-container">
-          <table id="tablaVentas">
-            <thead>
-              <tr>
-                <th>ID</th>
-                <th>Producto</th>
-                <th>Cantidad</th>
-                <th>Venta ($)</th>
-                <th>Fecha</th>
-                <th>Hora</th>
-                <th>Pago</th>
-              </tr>
-            </thead>
-            <tbody>
-              <!-- Se llena desde ventas.js -->
-            </tbody>
-          </table>
+    <!-- overlay global -->
+    <div id="overlay" class="overlay"></div>
+
+    <!-- MAIN -->
+    <main class="main">
+
+      <!-- TOPBAR GLOBAL -->
+      <header class="topbar">
+        <button id="menuBtn" class="menu-btn">☰</button>
+        <h1>Ventas</h1>
+        <span id="status" class="status-dot offline"></span>
+      </header>
+
+      <div class="ventas-header">
+        <div class="ventas-info">
+          <span id="tipoMaquinaLabel">⚙️ Cargando...</span>
+          <span id="balanceHeader">$0</span>
+          <span id="ventasHoyHeader">0 ventas hoy</span>
         </div>
       </div>
 
-      <!-- ==== TAB 2: PRODUCTOS === -->
-      <div id="tab-productos" class="tab-content">
+      <!-- ===== CONTENT ===== -->
+      <section class="ventas-top">
 
-        <h2 class="section-title">Ventas por producto</h2>
-        <div id="cardsProductos" class="cards-productos"></div>
-
-        <div class="chart-container">
-          <canvas id="graficaProductos"></canvas>
+        <!-- Venta promedio -->
+        <div class="inv-card">
+          <h3>📊 Venta promedio</h3>
+          <p id="promedio">$0</p>
         </div>
 
-      </div>
+        <!-- Top productos -->
+        <div class="inv-card top-productos">
+          <h3>🏆 Top productos</h3>
+          <ul id="topProductos"></ul>
+        </div>
 
-    </section>
+        <!-- Gráfica -->
+        
+        <!-- <div class="inv-card ventas-chart-h">
+          <h3>⏰ Ventas por hora</h3>
+          <canvas id="chartHoras"></canvas>
+          <div class="ventas-toggle">
+            <button class="toggle-btn active" data-mode="hoy">Hoy</button>
+            <button class="toggle-btn" data-mode="ayer">Ayer</button>
+            <button class="toggle-btn" data-mode="semana">7 días</button>
+            <button class="toggle-btn" data-mode="todo">Todo</button>
+          </div>
+        </div> -->
+
+        <div class="inv-card ventas-chart-h">
+
+          <div class="card-header">
+            <h3>⏰ Ventas por hora</h3>
+          </div>
+
+          <div class="chart-container">
+            <canvas id="chartHoras"></canvas>
+          </div>
+
+          <div class="ventas-toggle">
+            <button class="toggle-btn active" data-mode="hoy">Hoy</button>
+            <button class="toggle-btn" data-mode="ayer">Ayer</button>
+            <button class="toggle-btn" data-mode="semana">7 días</button>
+            <button class="toggle-btn" data-mode="todo">Todo</button>
+          </div>
+
+        </div>
+
+        <!-- Litros / Garrafones -->
+        <div class="inv-card">
+          <h3 id="cardCantidadTitulo">📦 Litros / Garrafones</h3>
+          <p id="litros">0</p>
+        </div>
+
+        <!-- Método de pago -->
+        <div class="inv-card pagos-card">
+          <div class="card-header">
+            <h3>💳 Método de pago</h3>
+          </div>
+          <div class="card-precio" id="metodoPago">-</div>
+          <div class="card-footer">
+            <span>Más usado</span>
+          </div>
+        </div>
+
+      </section>
+
+
+      <!-- ===== HISTÓRICO DE VENTAS ===== -->
+      <section class="ventas-bottom">
+
+        <div class="inv-card chart-card">
+
+          <div class="card-header">
+            <h3>📈 Ventas por día ($)</h3>
+          </div>
+
+          <div class="chart-container chart-line">
+            <canvas id="chartHistorico"></canvas>
+          </div>
+
+        </div>
+
+      </section>
+
+    </main>
 
   </div>
 
-  <!-- Loader -->
-  <div id="loader" class="loader-overlay">
+  <div id="globalLoader" class="loader-overlay hidden">
     <div class="loader"></div>
   </div>
-
-
 </body>
 </html>
